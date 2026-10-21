@@ -110,18 +110,15 @@
   G.stages = {
 
     s4: {
-      id: 's4', n: 4, name: 'NEBULA ARENA', theme: 'arena', mode: 'arena', length: 1, key: 6, boss: 'talon', events: [],
-      arena: {
-        R: 5200, boss: 'talon', bossT: 120,
-        waves: [{ t: 2, kind: 'afighter', n: 3 }, { t: 14, kind: 'afighter', n: 4 }, { t: 27, kind: 'atwin', n: 2 }, { t: 29, kind: 'afighter', n: 3 }, { t: 44, kind: 'afighter', n: 5 }, { t: 58, kind: 'atwin', n: 2 }, { t: 60, kind: 'afighter', n: 4 }],
-        pickups: [{ t: 6, kind: 'star' }, { t: 7, kind: 'star' }, { t: 8, kind: 'star' }, { t: 19, kind: 'bomb' }, { t: 24, kind: 'star' }, { t: 25, kind: 'star' }, { t: 33, kind: 'repair' }, { t: 41, kind: 'laser' }, { t: 47, kind: 'star' }, { t: 48, kind: 'star' }, { t: 52, kind: 'bomb' }, { t: 64, kind: 'repair' }, { t: 72, kind: 'shield' }],
-      },
+      id: 's4', n: 4, name: 'NEBULA REACH', theme: 'space', style: 'arena', length: 96000, bossAt: 88000, boss: 'talon', key: 6,
+      events: compose({ rescues: [{ d: 40000, who: 'juno' }, { d: 66000, who: 'bram' }], seed: 4444, bossAt: 88000, gap: 0.93, opening: ['stars', 'fighters', 'twin'],
+        deck: [['fighters', 'twin', 'rocks', 'mines', 'crystal', 'fighters'], ['fighters', 'twin', 'crystal', 'mines', 'gunship', 'rocks', 'fighters'], ['fighters', 'fighters', 'twin', 'crystal', 'gunship', 'mines', 'boulders']],
+        pickups: [{ d: 8000, kind: 'laser', x: 0, y: 40 }, { d: 20000, kind: 'bomb', x: 90, y: 30 }, { d: 32000, kind: 'repair', x: -80, y: 40 }, { d: 46000, kind: 'laser', x: 50, y: 60 }, { d: 58000, kind: 'bomb', x: -80, y: 30 }, { d: 70000, kind: 'repair', x: 70, y: 40 }, { d: 80000, kind: 'shield', x: 0, y: 30 }] }),
       comms: [
-        { d: 400, who: 'moss', expr: 'calm', text: 'Open space, Captain! No rails here. Left and right turn the ship, up and down pitch the nose.' },
-        { d: 4500, who: 'vale', expr: 'cool', text: 'The scanner ring in the corner shows every contact. Straight ahead is the top.' },
-        { d: 12000, who: 'moss', expr: 'nervous', text: 'Some are on your tail! Turn hard, or roll to throw their shots back.' },
-        { d: 36000, who: 'vale', expr: 'smirk', text: 'They keep coming. Keep your shield topped up.' },
-        { d: 70000, who: 'moss', expr: 'worry', text: 'Captain... one signature just lit up the whole scanner.' },
+        { d: 400, who: 'moss', expr: 'calm', text: 'Nebula Reach. Gloom patrols are thick in here, Captain.' },
+        { d: 6000, who: 'vale', expr: 'cool', text: 'Keep rolling. Throw their shots back at them.' },
+        { d: 30000, who: 'moss', expr: 'nervous', text: 'More contacts than the scanner can count. Stay on target!' },
+        { d: 78000, who: 'moss', expr: 'worry', text: 'Captain... one signature just lit up the whole scanner.' },
       ],
       bossWarn: [{ who: 'moss', expr: 'gasp', text: 'That crimson streak is Scarlet Talon, the Regent\'s best ace!', pri: 2 }, { who: 'vale', expr: 'smug', text: 'I have been waiting for a rematch. Stay on his tail, Moss.', pri: 1 }],
       victory: [{ who: 'vale', expr: 'warm', text: 'Talon is down. Not a scratch on my paint.', pri: 2 }, { who: 'moss', expr: 'laugh', text: 'And not a scratch on mine either!', pri: 1 }],
@@ -141,19 +138,17 @@
       victory: [{ who: 'vale', expr: 'smirk', text: 'The gate is open. Only the fleet stands between us and the Regent.', pri: 2 }, { who: 'moss', expr: 'cheer', text: 'Hangar time, Captain!', pri: 1 }],
     },
     s6: {
-      id: 's6', n: 6, name: "REGENT'S FLEET", theme: 'arena', mode: 'arena', length: 1, key: 9, boss: 'queen', events: [],
-      arena: {
-        R: 6200, carrier: true, boss: 'queen',
-        waves: [],
-        pickups: [{ t: 8, kind: 'star' }, { t: 9, kind: 'star' }, { t: 16, kind: 'repair' }, { t: 28, kind: 'bomb' }, { t: 36, kind: 'star' }, { t: 37, kind: 'star' }, { t: 46, kind: 'laser' }, { t: 58, kind: 'repair' }, { t: 70, kind: 'bomb' }, { t: 82, kind: 'repair' }, { t: 95, kind: 'shield' }, { t: 108, kind: 'bomb' }, { t: 120, kind: 'repair' }],
-      },
+      id: 's6', n: 6, name: "REGENT'S FLEET", theme: 'space', style: 'arena', length: 102000, bossAt: 94000, boss: 'queen', key: 9,
+      events: compose({ rescues: [{ d: 46000, who: 'bram' }, { d: 72000, who: 'juno', n: 4 }], seed: 6666, bossAt: 94000, gap: 0.9, tierBoost: 1, opening: ['stars', 'fighters', 'twin'],
+        deck: [['fighters', 'twin', 'gunship', 'mines', 'crystal', 'rocks'], ['fighters', 'twin', 'gunship', 'crystal', 'mines', 'gunship', 'boulders'], ['fighters', 'twin', 'gunship', 'gunship', 'crystal', 'mines', 'fighters']],
+        pickups: [{ d: 8000, kind: 'laser', x: 0, y: 40 }, { d: 22000, kind: 'bomb', x: 90, y: 30 }, { d: 34000, kind: 'repair', x: -80, y: 40 }, { d: 48000, kind: 'laser', x: 50, y: 60 }, { d: 60000, kind: 'bomb', x: -80, y: 30 }, { d: 70000, kind: 'repair', x: 70, y: 40 }, { d: 82000, kind: 'shield', x: 0, y: 30 }, { d: 90000, kind: 'bomb', x: 60, y: 30 }] }),
       comms: [
-        { d: 500, who: 'moss', expr: 'gasp', text: 'There she is - the Hollow Queen, the Regent\'s flagship carrier!' },
-        { d: 4000, who: 'vale', expr: 'cool', text: 'Her shield is projected by four turrets. Take them out first.' },
-        { d: 14000, who: 'moss', expr: 'nervous', text: 'Fighters are launching from her hangars! Do not stop moving!' },
-        { d: 50000, who: 'vale', expr: 'fierce', text: 'Keep circling. Strafe the turrets, then the hull.' },
+        { d: 500, who: 'moss', expr: 'gasp', text: 'The Regent\'s fleet! Gunships and escorts as far as the scanner reaches.' },
+        { d: 6000, who: 'vale', expr: 'cool', text: 'Cut through them. Their carrier, the Hollow Queen, is at the far end.' },
+        { d: 40000, who: 'moss', expr: 'nervous', text: 'Heavy armor on every wing. Lock-on volleys, Captain!' },
+        { d: 86000, who: 'vale', expr: 'fierce', text: 'There she is. Stay sharp.' },
       ],
-      bossWarn: [],
+      bossWarn: [{ who: 'moss', expr: 'gasp', text: 'The Hollow Queen, the Regent\'s flagship carrier!', pri: 2 }, { who: 'vale', expr: 'cool', text: 'Her shield is projected by four turrets. Take them out first.', pri: 1 }],
       victory: [{ who: 'vale', expr: 'warm', text: 'The Hollow Queen is hollow no more. One last jump, Cinder Squadron.', pri: 2 }, { who: 'moss', expr: 'cheer', text: 'To the hangar, then to the Crown Core!', pri: 1 }],
     },
     s7: {

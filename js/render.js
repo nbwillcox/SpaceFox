@@ -19,7 +19,6 @@
   const THEMES = {
     canyon: { img: 'bg', haze: HAZE, rock: ROCK, floor: ['#3fc9cf', '#1e93b0', '#0a4f7a'], band: '190,245,255', foam: '210,250,255', glint: [90, 110, 255], strata: 'dark', box: BOX_COL, wall: C.WALL },
     water: { img: 'tint', haze: [130, 160, 205], rock: [[120, 138, 168], [100, 122, 156], [136, 152, 180], [88, 108, 142]], floor: ['#5ee0d2', '#1fa6b8', '#0b5a86'], band: '200,250,255', foam: '225,252,255', glint: [120, 255, 230], strata: 'dark', box: [[104, 120, 150], [86, 140, 160], [150, 170, 200]], wall: 1050 },
-    arena: { haze: [10, 6, 30], box: [[90, 86, 120], [90, 86, 120], [90, 86, 120]] },
     warp: { haze: [30, 10, 40], box: [[120, 90, 60], [120, 90, 60], [120, 90, 60]] },
     fortress: { haze: [20, 6, 10], box: [[110, 60, 56], [140, 80, 60], [96, 70, 80]] },
     tunnel: { haze: [6, 8, 20], box: [[64, 78, 118], [86, 60, 124], [96, 108, 150]] },
@@ -176,50 +175,9 @@
     ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
   }
 
-  /* the all-range arena: a sky sphere (nebulae, a gas giant and stars that turn with the ship) plus dust streaks that show speed */
-  function backdropArena(ctx, g) {
-    const W = C.W, H = C.H, A = G.arena;
-    const bgk = ctx.createLinearGradient(0, 0, 0, H);
-    bgk.addColorStop(0, '#05030f'); bgk.addColorStop(0.5, '#0d0824'); bgk.addColorStop(1, '#060a1c');
-    ctx.fillStyle = bgk; ctx.fillRect(0, 0, W, H);
-    const FOC = 620;
-    for (const o of A.sky) {
-      if (o.z < 0.04) continue;
-      const sx = C.VX + o.x / o.z * FOC, sy = C.VY - o.y / o.z * FOC;
-      if (o.k === 'n') {
-        const r = o.sz / Math.max(0.4, o.z) * 0.8;
-        if (sx < -r || sx > W + r || sy < -r || sy > H + r) continue;
-        const gr = ctx.createRadialGradient(sx, sy, 4, sx, sy, r); gr.addColorStop(0, o.col); gr.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = gr; ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
-      } else if (o.k === 'p') {
-        const r = o.sz / Math.max(0.5, o.z) * 0.9;
-        if (sx < -r || sx > W + r || sy < -r || sy > H + r) continue;
-        const gr = ctx.createRadialGradient(sx - r * 0.3, sy - r * 0.3, r * 0.1, sx, sy, r);
-        gr.addColorStop(0, '#ffd6a0'); gr.addColorStop(0.5, '#c8704a'); gr.addColorStop(1, '#3a1a2a');
-        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(sx, sy, r, 0, TAU); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,220,170,0.5)'; ctx.lineWidth = Math.max(2, r * 0.07);
-        ctx.beginPath(); ctx.ellipse(sx, sy, r * 1.7, r * 0.34, -0.35, 0, TAU); ctx.stroke();
-      } else {
-        if (sx < 0 || sx > W || sy < 0 || sy > H) continue;
-        ctx.fillStyle = o.c > 0.8 ? 'rgba(160,220,255,0.9)' : o.c > 0.4 ? 'rgba(255,255,255,0.85)' : 'rgba(255,200,160,0.8)';
-        const sz = o.c > 0.9 ? 2.4 : 1.4;
-        ctx.fillRect(sx, sy, sz, sz);
-      }
-    }
-    for (const d of A.dust) {
-      if (d.z < -100) continue;
-      const p = g.proj(d.x, d.y, d.z), q = g.proj(d.x, d.y, d.z + 60 + g.scroll * 0.06);
-      if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) continue;
-      const a = clamp(1 - d.z / 2400, 0.1, 0.9);
-      ctx.strokeStyle = 'rgba(190,220,255,' + a.toFixed(2) + ')'; ctx.lineWidth = Math.max(0.8, 2.2 * p.s);
-      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-    }
-  }
-
   R.backdrop = function (ctx, g) {
     const t = (g.stage && g.stage.theme) || 'canyon';
-    if (t === 'arena') backdropArena(ctx, g);
-    else if (t === 'space' || t === 'warp') backdropSpace(ctx, g, t === 'warp');
+    if (t === 'space' || t === 'warp') backdropSpace(ctx, g, t === 'warp');
     else if (t === 'tunnel' || t === 'fortress') backdropTunnel(ctx, g, t === 'fortress');
     else backdropCanyon(ctx, g, THEMES[t] || THEMES.canyon);
   };
@@ -264,8 +222,8 @@
     const q = g.proj(s.x, s.y, C.SHIP_Z), k = 0.62 * q.s;
     /* shadow on the water */
     const sh = g.proj(s.x, C.FLOOR, C.SHIP_Z), hgt = s.y - C.FLOOR;
-    if (g.stage.theme !== 'space' && g.stage.theme !== 'arena' && g.stage.theme !== 'warp') ctx.fillStyle = 'rgba(0,20,40,' + (0.38 * (1 - clamp(hgt / 520, 0, 0.8))).toFixed(2) + ')';
-    if (g.stage.theme !== 'space' && g.stage.theme !== 'arena' && g.stage.theme !== 'warp') { ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 70 * sh.s * (1 - clamp(hgt / 900, 0, 0.5)), 15 * sh.s, 0, 0, TAU); ctx.fill(); }
+    if (g.stage.theme !== 'space' && g.stage.theme !== 'warp') ctx.fillStyle = 'rgba(0,20,40,' + (0.38 * (1 - clamp(hgt / 520, 0, 0.8))).toFixed(2) + ')';
+    if (g.stage.theme !== 'space' && g.stage.theme !== 'warp') { ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 70 * sh.s * (1 - clamp(hgt / 900, 0, 0.5)), 15 * sh.s, 0, 0, TAU); ctx.fill(); }
     const fr = shipFrame(g);
     let alpha = 1;
     if (s.inv > 0 && s.rollT <= 0 && g.hurtT <= 0) alpha = ((g.t * 14) | 0) % 2 ? 0.4 : 1;
@@ -345,7 +303,7 @@
   }
   /* an enemy plasma bolt: a pulsing orb that swells as it closes, a chain of fading afterimages stretching back toward where it came from, and a ring that contracts as it arrives */
   function drawEShot(ctx, g, sh) {
-    const sc = g.arena ? g.scroll : 0;
+    const sc = 0;
     const q = g.proj(sh.x, sh.y, sh.z);
     if (q.s <= 0.04) return;
     const big = sh.size || 1, R = sh.r * 2.1 * q.s, pulse = 1 + 0.12 * Math.sin(g.t * 24 + sh.x);
@@ -421,11 +379,10 @@
     const fa = clamp((C.ZFAR - e.z) / 500, 0, 1);
     const atl = spec.atlas || 'enemy', k = (spec.w / SP.size(atl === 'none' ? 'enemy' : atl, spec.frame).w) * q.s;
     let rot = 0;
-    if (e.boss) { rot = e.arena ? 0 : Math.sin(e.age * 0.6) * 0.035; if (!e.arena) drawBossShadow(ctx, g, e); }
+    if (e.boss) { rot = Math.sin(e.age * 0.6) * 0.035; drawBossShadow(ctx, g, e); }
     if (e.kind === 'fighter') rot = Math.cos(e.age * 2.2 + e.ph) * 0.28 * (e.amp > 100 ? 1 : 0.4);
     else if (e.kind === 'mine' || e.kind === 'crystal') rot = e.kind === 'mine' ? e.rot : Math.sin(e.rot) * 0.2;
     else if (e.kind === 'amine') rot = e.rot;
-    else if (e.arena) rot = e.rotv || 0;
     if (spec.glow) { ctx.globalCompositeOperation = 'lighter'; const rr = spec.w * 0.9 * q.s; ctx.globalAlpha = 0.5 * fa; ctx.drawImage(G.gfx.glow(spec.glow), q.x - rr, q.y - rr, rr * 2, rr * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
     SP.draw(ctx, atl, spec.frame, q.x, q.y, k, false, fa, rot);
     if (e.flash > 0) { ctx.globalCompositeOperation = 'lighter'; SP.draw(ctx, atl, spec.frame, q.x, q.y, k, false, 0.7 * fa, rot); ctx.globalCompositeOperation = 'source-over'; }
@@ -569,7 +526,7 @@
     let fr = F.LEVEL; if (b > 0.5) fr = F.R1; else if (b < -0.5) fr = F.L1;
     const lost = w.state === 'lost', fa = clamp((C.ZFAR - w.z) / 500, 0, 1) * (lost ? 0.6 : 1);
     ctx.fillStyle = 'rgba(0,20,40,0.3)'; const sh = g.proj(w.x, C.FLOOR, w.z);
-    if (g.stage.theme !== 'space' && g.stage.theme !== 'arena' && g.stage.theme !== 'warp') { ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 60 * sh.s, 12 * sh.s, 0, 0, TAU); ctx.fill(); }
+    if (g.stage.theme !== 'space' && g.stage.theme !== 'warp') { ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 60 * sh.s, 12 * sh.s, 0, 0, TAU); ctx.fill(); }
     ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * fa;
     for (const ex of [-0.19, 0.19]) ctx.drawImage(G.gfx.glow('rgba(110,220,255,1)'), q.x + ex * 274 * k - 70 * k, q.y + 8 * k - 70 * k, 140 * k, 140 * k);
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';

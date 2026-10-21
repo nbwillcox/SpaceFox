@@ -50,7 +50,7 @@ Story in one paragraph: the Gloom Armada is strip-mining the Hearth Reach. Cinde
 - **Barrel roll deflect:** ~0.5 s roll, brief i-frames, reflects enemy shots back along their path (can kill the shooter). Cooldown short; shop upgrade lowers it. Rolling into a wall/obstacle does not save you.
 - **Bombs:** limited stock (3, shop up to 6), screen-clearing blast of nearby depth range.
 - **Boost / brake:** boost burns a meter for speed (and a score-per-second bonus), brake slows the scroll for precision. Meter refills over time and from the orange chevron pickup.
-- **All-range arenas:** Stages 4 and 6 and boss duels open into free flight: ship turns (not locked to rails), radar ring, enemy fighters chase, your frog calls out "bogey behind you". Camera follows behind the ship (still pseudo-3D). Stick turns, boost/brake as above. Since you disliked the U-turn, the camera auto-swings when you steer hard; no flip button.
+- **(Cut) All-range arenas:** Stages 4 and 6 and boss duels open into free flight: ship turns (not locked to rails), radar ring, enemy fighters chase, your frog calls out "bogey behind you". Camera follows behind the ship (still pseudo-3D). Stick turns, boost/brake as above. Since you disliked the U-turn, the camera auto-swings when you steer hard; no flip button.
 - **Wingmate rescue:** at set points Juno/Bram get tailed by 2-4 enemies; shoot them off before their shield hits zero. Saved wingmates give small hint callouts and a bonus; abandoned ones retreat and the stage score loses the rescue medal.
 - **Medals per stage:** Bronze/Silver/Gold by kill count and objective (hidden ones: free a wingmate, find a branch trigger). Gold on a stage unlocks the hard branch next time.
 
@@ -92,7 +92,7 @@ Procedural extras per stage: asteroids, mines, laser gates, wall turrets, kamika
 1 Ember Canyon ──┬─> 2a Drift Belt (easy)      ──┬─> 3a Foundry Spine ──┐
                  └─> 2b Glasswater Reach (hard) ─┴─> 3b Ghost Station ───┤
                                                                          v
-   4 Nebula Arena (all-range) -> 5 Gatewyrm Run -> 6 Regent's Fleet (all-range) -> 7 Crown Core
+   4 Nebula Reach -> 5 Gatewyrm Run -> 6 Regent's Fleet -> 7 Crown Core
 ```
 
 | Stage | Theme | Notable |
@@ -102,7 +102,7 @@ Procedural extras per stage: asteroids, mines, laser gates, wall turrets, kamika
 | 2b Glasswater Reach | River/water-skimming through arches | Hard route, bigger credit/medal payout, enemy tanks and waterfalls |
 | 3a Foundry Spine | Molten pipes, wall turrets | Gates and crushers, Foundry Warden |
 | 3b Ghost Station | Interior corridors and laser gates | Tight pseudo-3D tunnel |
-| 4 Nebula Arena | All-range dogfight | Scarlet Talon rival ace |
+| 4 Nebula Reach | Rail run through a nebula | Scarlet Talon rival ace |
 | 5 Gatewyrm Run | Gold ring gates in a warp lane | Gatewyrm |
 | 6 Regent's Fleet | All-range fleet assault | Carrier boss |
 | 7 Crown Core | Final fortress | Crown Core (3 phases) |
@@ -155,7 +155,7 @@ Title (Firebrand + fox portrait), difficulty, **route map** (shows the fork, med
 All six milestones are built. Differences from this plan, for the record:
 
 - The four rail-stage bosses after Bulwark (Rockjaw, Tidecaller, Foundry Warden, Prism Sentinel) reuse the six enemy sprites at giant scale; the Gatewyrm and Crown Core use the serpent and claw-hub concept art; the Hollow Queen is drawn in code.
-- Stage 4 and 6 are all-range arenas simulated in the ship's own frame (the world rotates around the ship), with a radar and a gentle laser aim assist.
+- All-range arenas were built and then removed after playtesting (no rails felt wrong): stages 4 and 6 are rail stages, and the Hollow Queen is a rail boss shielded by four turrets.
 - Wingmate rescues exist on the rail stages only. Juno and Bram portraits are drawn in code.
 - Hidden medal objectives were dropped: medals come from the share of enemies destroyed. Saved wingmates add credits.
 - Extras beyond the plan: gamepad support, a how-to-play page, restart stage from the pause menu, invert pitch, rapid-fire setting, eight music styles.

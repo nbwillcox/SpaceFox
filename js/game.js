@@ -75,7 +75,7 @@
     Game.stats = { kills: 0, shotsFired: 0, hitsTaken: 0, crashes: 0 };
     startStage(id);
   };
-  const styleOf = (t) => ({ canyon: 'canyon', water: 'water', foundry: 'foundry', space: 'space', tunnel: 'tunnel', warp: 'warp', arena: 'arena', fortress: 'final' }[t] || 'canyon');
+  const styleOf = (t) => ({ canyon: 'canyon', water: 'water', foundry: 'foundry', space: 'space', tunnel: 'tunnel', warp: 'warp', fortress: 'final' }[t] || 'canyon');
   function startStage(id) {
     Game.stageId = id; Game.stage = G.stages[id] || G.stages.s1; Game.stageNo = Game.stage.n;
     const up = Game.run.up;
@@ -90,15 +90,13 @@
     while (Game.evIdx < Game.stage.events.length && Game.stage.events[Game.evIdx].d < Game.dist + C.ZFAR) Game.evIdx++;   /* ?at=D skips the early events */
     Game.ents = []; Game.shots = []; Game.eshots = []; Game.missiles = []; Game.refl = []; Game.bombFx = null; FX.reset();
     Game.boss = null; Game.bossWarned = false; Game.bossSpawned = false; G.comms.clear(); Game.cIdx = 0;
-    Game.arena = Game.stage.mode === 'arena';
-    if (Game.arena) G.arena.init(Game.stage); else G.arena.on = false;
     const cm = Game.stage.comms || [];
     while (Game.cIdx < cm.length && cm[Game.cIdx].d < Game.dist) Game.cIdx++;
     Game.shield = Game.maxShield; Game.boost = 100; Game.boostLock = false; Game.speed = 1; Game.flashT = 0; Game.hurtT = 0;
     Game.ship = { x: 0, y: 0, vx: 0, vy: 0, bank: 0, rollT: 0, rollDir: 0, rollCd: 0, inv: 1.5, fire: 0, dead: false, boosting: false, braking: false, over: 0, alpha: 1, flicker: 0, face: 0, holdT: 0, charging: false, chargeT: 0, lockT: 0, locks: [], bombCd: 0 };
     Game.phase = 'intro'; Game.phaseT = 0;
     Game.msg = Game.demo ? null : { title: 'STAGE ' + Game.stage.n, sub: Game.stage.name, t: 0, dur: 2.6 };
-    if (!Game.demo) { snd('ready'); A.music('play', Game.stage.key, styleOf(Game.stage.theme)); }
+    if (!Game.demo) { snd('ready'); A.music('play', Game.stage.key, (Game.stage.style || styleOf(Game.stage.theme))); }
   }
 
   /* ---------- spawning ---------- */
@@ -239,7 +237,6 @@
   /* ---------- autopilot (title demo and ?bot=1) ---------- */
   const botState = { tx: 0, ty: 0, fireOn: true, rollIn: 0 };
   function botSteer(dt) {
-    if (Game.arena) { G.arena.bot(dt); return; }
     const s = Game.ship;
     let best = null, bd = 1e9;
     for (const e of Game.ents) {
@@ -330,17 +327,13 @@
     /* --- ship --- */
     let ax = I.axisX(), ay = I.axisY();
     if (!ax && !ay && I.mouseActive && G.settings.mouse && !Game.bot && Game.phase !== 'intro') {
-      if (Game.arena) {                                         /* the pointer's offset from the middle is a turn rate */
-        const dx = I.mx - 480, dy = I.my - 250;
-        ax = Math.abs(dx) < 22 ? 0 : clamp(dx / 280, -1, 1); ay = Math.abs(dy) < 22 ? 0 : clamp(-dy / 190, -1, 1);
-      } else {                                                  /* the ship chases the point under the pointer */
-        const sc2 = C.F / (C.F + C.SHIP_Z);
-        const tx = clamp((I.mx - C.VX) / (sc2 * 0.65), -C.BX, C.BX), ty = clamp((C.EYE - (I.my - C.VY) / sc2) / 0.65, C.BY0, C.BY1);
-        ax = clamp((tx - s.x) / 120, -1, 1); ay = clamp((ty - s.y) / 90, -1, 1);
-      }
+      /* the ship chases the point under the pointer */
+      const sc2 = C.F / (C.F + C.SHIP_Z);
+      const tx = clamp((I.mx - C.VX) / (sc2 * 0.65), -C.BX, C.BX), ty = clamp((C.EYE - (I.my - C.VY) / sc2) / 0.65, C.BY0, C.BY1);
+      ax = clamp((tx - s.x) / 120, -1, 1); ay = clamp((ty - s.y) / 90, -1, 1);
     }
     const spd = 560;
-    if (!Game.arena) {
+    {
       if (s.dashT > 0) { s.dashT -= dt; s.vx += (s.dashV * Math.max(0, s.dashT / 0.5) - s.vx) * Math.min(1, 16 * dt); }      /* the roll's sideways dash is not steerable */
       else s.vx += (ax * spd - s.vx) * Math.min(1, 9 * dt);
       s.vy += (ay * spd * 0.8 - s.vy) * Math.min(1, 9 * dt);
@@ -350,7 +343,7 @@
     if (s.inv > 0) s.inv = Math.max(0, s.inv - dt);
     if (s.rollCd > 0) s.rollCd -= dt;
     const rr = I.takeRoll();
-    if (rr && s.rollT <= 0 && s.rollCd <= 0 && Game.phase !== 'intro') { s.rollT = Game.rollLen; s.rollDur = Game.rollLen; s.rollDir = rr; s.rollCd = Game.rollCd; s.dashT = Game.arena ? 0 : 0.5; s.dashV = rr * 1100; if (Game.arena) s.yr = (s.yr || 0) + rr * 1.2; snd('roll'); FX.glow(s.x, s.y, C.SHIP_Z, 120, 'rgba(120,220,255,1)', 0.3); }
+    if (rr && s.rollT <= 0 && s.rollCd <= 0 && Game.phase !== 'intro') { s.rollT = Game.rollLen; s.rollDur = Game.rollLen; s.rollDir = rr; s.rollCd = Game.rollCd; s.dashT = 0.5; s.dashV = rr * 1100; snd('roll'); FX.glow(s.x, s.y, C.SHIP_Z, 120, 'rgba(120,220,255,1)', 0.3); }
     if (s.rollT > 0) s.rollT = Math.max(0, s.rollT - dt);
     /* boost / brake */
     const wantBoost = I.held.boost && !Game.boostLock && Game.boost > 0, wantBrake = I.held.brake && !wantBoost;
@@ -361,9 +354,8 @@
     else { Game.boost = Math.min(100, Game.boost + (wantBrake ? 24 : Game.boostRegen) * dt); if (Game.boostLock && Game.boost > 30) Game.boostLock = false; }
     const targetSpeed = wantBoost ? 1.75 : wantBrake ? 0.55 : 1;
     Game.speed += (targetSpeed - Game.speed) * Math.min(1, 4 * dt);
-    Game.scroll = (Game.arena ? 1000 : C.SPEED) * Game.speed * (Game.phase === 'intro' ? Math.min(1, Game.phaseT / 1.2) : 1);
+    Game.scroll = C.SPEED * Game.speed * (Game.phase === 'intro' ? Math.min(1, Game.phaseT / 1.2) : 1);
     Game.dist += Game.scroll * dt;
-    if (Game.arena) G.arena.control(dt, ax, ay);
     A.engine(Game.speed, !Game.demo);
 
     Game.cam.x = s.x * 0.35; Game.cam.y = s.y * 0.35;
@@ -386,19 +378,17 @@
 
     /* --- events --- */
     const evs = Game.stage.events || [];
-    if (Game.arena) G.arena.tick(dt);
-    else while (Game.evIdx < evs.length && evs[Game.evIdx].d <= Game.dist + C.ZFAR) { const e = evs[Game.evIdx++]; spawnEvent(e, e.d - Game.dist); }
+    while (Game.evIdx < evs.length && evs[Game.evIdx].d <= Game.dist + C.ZFAR) { const e = evs[Game.evIdx++]; spawnEvent(e, e.d - Game.dist); }
     const cm = Game.stage.comms || [];
     while (Game.cIdx < cm.length && cm[Game.cIdx].d <= Game.dist) { const c = cm[Game.cIdx++]; say(c.who, c.expr, c.text, { pri: c.pri || 0 }); }
-    const bossAt = Game.arena ? 0 : Game.stage.bossAt;
+    const bossAt = Game.stage.bossAt;
     if (bossAt) {
       if (!Game.bossWarned && Game.dist >= bossAt - 2600) warnBoss();
       if (!Game.bossSpawned && Game.dist >= bossAt) spawnBoss();
-    } else if (!Game.arena && Game.dist >= Game.stage.length && Game.phase !== 'clear') endStage();
+    } else if (Game.dist >= Game.stage.length && Game.phase !== 'clear') endStage();
     if (Game.phase === 'intro' && Game.phaseT > 1.6) Game.phase = 'play';
 
     moveWorld(dt);
-    if (Game.arena) G.arena.rotateWorld();
     if (Game.shield < 30 && !Game.demo && Game.phase === 'play') snd('lowShield');
   };
 
@@ -418,14 +408,14 @@
     for (let i = Game.shots.length - 1; i >= 0; i--) {
       const sh = Game.shots[i];
       sh.pz = sh.z; sh.life -= dt;
-      if (Game.arena) { sh.x += (sh.vx || 0) * dt; sh.y += (sh.vy || 0) * dt; sh.z += (sh.vz - sc) * dt; } else sh.z += sh.vz * dt;
+      sh.z += sh.vz * dt;
       if (sh.life <= 0 || sh.z > C.ZFAR) { Game.shots.splice(i, 1); continue; }
     }
     /* enemy shots */
     for (let i = Game.eshots.length - 1; i >= 0; i--) {
       const sh = Game.eshots[i];
-      sh.x += sh.vx * dt; sh.y += sh.vy * dt; sh.z += (sh.vz - (Game.arena ? sc : 0)) * dt;
-      if (Game.arena ? (sh.x * sh.x + sh.y * sh.y + sh.z * sh.z > 36e6) : (sh.z < -120 || Math.abs(sh.x) > 2500 || sh.y < C.FLOOR - 60)) { Game.eshots.splice(i, 1); continue; }
+      sh.x += sh.vx * dt; sh.y += sh.vy * dt; sh.z += sh.vz * dt;
+      if (sh.z < -120 || Math.abs(sh.x) > 2500 || sh.y < C.FLOOR - 60) { Game.eshots.splice(i, 1); continue; }
       if (!s.dead && s.rollT > 0 && sh.z < C.SHIP_Z + 170 && sh.z > C.SHIP_Z - 60) {
         const dx = sh.x - s.x, dy = sh.y - s.y;
         if (dx * dx + dy * dy < 150 * 150) { deflect(sh); Game.eshots.splice(i, 1); continue; }              /* rolling: the shot is thrown back */
@@ -485,8 +475,8 @@
       for (const e of Game.ents) {
         if (e.t === 'box') {
           if (sh.z >= e.z - 20 && sh.pz <= e.z + e.depth + 20 && sh.x > e.x0 && sh.x < e.x1 && sh.y > e.y0 && sh.y < e.y1) { FX.burst(sh.x, sh.y, e.z, 4, 120, 'rgba(255,200,140,1)'); gone = true; break; }
-        } else if (e.t === 'enemy' && !e.dead && e.z > 40 && sh.z >= e.z - (e.arena ? 80 : 40) && sh.pz <= e.z + (e.arena ? 80 : 40)) {
-          if (inHit(e, sh.x, sh.y, (sh.big ? 70 : 0) + (e.arena ? 45 : 0))) {
+        } else if (e.t === 'enemy' && !e.dead && e.z > 40 && sh.z >= e.z - 40 && sh.pz <= e.z + 40) {
+          if (inHit(e, sh.x, sh.y, (sh.big ? 70 : 0))) {
             if (sh.big) {                                         /* the charged bolt bursts: everything near the impact takes the hit */
               FX.explosion(sh.x, sh.y, e.z, 1.3);
               for (const o of Game.ents) if (o.t === 'enemy' && !o.dead && Math.abs(o.z - e.z) < 160 && (o.x - e.x) * (o.x - e.x) + (o.y - e.y) * (o.y - e.y) < 230 * 230) damageEnemy(o, sh.dmg, sh.vol);
@@ -549,7 +539,7 @@
     const def = bossDef();
     Game.msg = { title: 'WARNING', sub: def.name + ' APPROACHING', t: 0, dur: 3 };
     snd('warning'); setTimeout(() => snd('warning'), 700);
-    A.music('boss', Game.stage.key, styleOf(Game.stage.theme)); snd('bossIn');
+    A.music('boss', Game.stage.key, (Game.stage.style || styleOf(Game.stage.theme))); snd('bossIn');
     const lines = Game.stage.bossWarn || [
       { who: 'moss', expr: 'gasp', text: 'Captain, huge signature ahead! That is the ' + def.name + ' - a walking fortress!', pri: 2 },
       { who: 'moss', expr: 'worry', text: 'Its armor shrugs off plain lasers. Lock on, or roll and send its mortars home!', pri: 1 }];
@@ -560,6 +550,9 @@
     const def = bossDef(), maxHp = Math.round(def.hp * Game.diff.hp);
     const e = addEnemy('boss', 0, def.y, 3200, { boss: true, def, name: def.name, maxHp, hp: maxHp, phase: 1, state: 'enter', baseZ: 3200, atk: null, atkT: 2, seqI: 0, tele: null, xOff: 0, zOff: 0, dieT: 0, expT: 0 });
     Game.boss = e;
+    if (def.shielded) {                                          /* shield generators: destroy all four to open the hull */
+      for (const [ox, oy] of [[-480, 40], [480, 40], [-230, -110], [230, -110]]) addEnemy('rturret', ox, def.y + oy, 3200, { host: e, offx: ox, offy: oy, minion: true, fire: U.rand(0.8, 1.8) });
+    }
   }
   function shotTo(e, tx, ty, speed, size) {
     const dz = Math.max(200, e.z - C.SHIP_Z), t = dz / speed;
@@ -591,7 +584,6 @@
   }
   function updateBoss(e, dt) {
     const s = Game.ship, def = e.def;
-    if (def.arena) { G.arena.updateBoss(e, dt); return; }
     if (e.dying) {
       e.dieT += dt; e.expT -= dt;
       if (e.expT <= 0) { e.expT = 0.13; FX.explosion(e.x + U.rand(-def.rx * 0.9, def.rx * 0.9), e.y + U.rand(-def.ry * 0.9, def.ry * 0.9), e.z - 40, 1.5); snd('boom', 1); }
@@ -605,6 +597,10 @@
       e.z = e.baseZ; e.x = Math.sin(e.age * 0.6) * def.sway; e.y = def.y;
       if (Math.abs(e.baseZ - def.z) < 30) { e.state = 'fight'; e.atkT = 1.4; }
       return;
+    }
+    if (def.shielded) {
+      e.gens = Game.ents.filter((o) => o.kind === 'rturret' && !o.dead).length; e.shield = e.gens > 0;
+      if (e.phase === 1 && e.gens === 0) bossPhase2(e);
     }
     if (!e.atk) { e.atkT -= dt * Game.diff.rate; if (e.atkT <= 0) startAtk(e); }
     else runAtk(e, dt);
@@ -677,10 +673,9 @@
     const s = Game.ship;
     s.fire = Game.tier === 3 ? 0.085 : 0.1;
     const dmg = Game.tier === 3 ? 2 : 1;
-    const bv = Game.arena ? Game.scroll : 0;
+    const bv = 0;
     if (Game.tier === 1) Game.shots.push({ x: s.x, y: s.y - 4, z: C.SHIP_Z + 20, vz: 3000 + bv, vx: 0, vy: 0, life: 1.2, pz: C.SHIP_Z + 20, dmg });
     else for (const ox of [-22, 22]) Game.shots.push({ x: s.x + ox, y: s.y - 4, z: C.SHIP_Z + 20, vz: 3200 + bv, vx: 0, vy: 0, life: 1.2, pz: C.SHIP_Z + 20, dmg });
-    if (Game.arena) { const n = Game.shots.length; for (let k = Math.max(0, n - (Game.tier === 1 ? 1 : 2)); k < n; k++) G.arena.assist(Game.shots[k]); }
     Game.stats.shotsFired++;
     snd('laser', Game.tier);
   }
@@ -712,7 +707,7 @@
       locks.forEach((t, i) => Game.missiles.push({ x: s.x + (i % 2 ? 40 : -40), y: s.y - 10, z: C.SHIP_Z + 30, vz: 2300, target: t, dmg: 4 + power * 2, vol: id, age: -i * 0.06, life: 3 }));
     } else {
       /* nothing locked: one fat plasma bolt */
-      Game.shots.push({ x: s.x, y: s.y - 4, z: C.SHIP_Z + 20, vz: 2600 + (Game.arena ? Game.scroll : 0), vx: 0, vy: 0, life: 1.4, pz: C.SHIP_Z + 20, dmg: 5 + power * 3, big: true, vol: id });
+      Game.shots.push({ x: s.x, y: s.y - 4, z: C.SHIP_Z + 20, vz: 2600, vx: 0, vy: 0, life: 1.4, pz: C.SHIP_Z + 20, dmg: 5 + power * 3, big: true, vol: id });
     }
     s.chargeT = 0;
   }
@@ -779,9 +774,17 @@
   function updateEnemy(e, dt) {
     const s = Game.ship, sc = Game.scroll;
     if (e.flash > 0) e.flash -= dt;
-    if (e.arena) { G.arena.updateEnemy(e, dt); return !!e.dead; }
     switch (e.kind) {
       case 'boss': updateBoss(e, dt); break;
+      case 'rturret': {
+        const h = e.host;
+        if (h && !h.dead && !h.dying && Game.boss === h) {
+          e.x = h.x + e.offx; e.y = h.y + e.offy; e.z = h.z - 140;
+          e.fire -= dt * Game.diff.rate;
+          if (e.fire <= 0 && e.z > 500 && e.z < 2600 && h.state === 'fight') { e.fire = U.rand(1.7, 2.7); enemyShot(e, 1, 780, 90); }
+        } else { e.z -= sc * dt; }
+        break;
+      }
       case 'rock': case 'boulder': {
         e.z -= sc * dt; e.rot += dt * (e.ph > 3 ? 0.7 : -0.7);
         e.x += (e.vx || 0) * dt; e.y += (e.vy || 0) * dt;
@@ -868,7 +871,7 @@
 
   Game.heroXY = () => null;
 
-  /* internals the arena module needs */
+  /* internals the late-boss module needs */
   Game._ = { addEnemy, hurt, damageEnemy, say, snd, addScore, EN, BOSSES, warnBoss, bossDown, spawnBossDef: null, inHit };
 
   /* ---------- render hooks (see render.js) ---------- */

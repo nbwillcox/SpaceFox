@@ -4,7 +4,7 @@ A free, retro-flavored on-rails space shooter with neon-meets-painted art: pilot
 
 **Play it in your browser:** https://nbwillcox.github.io/SpaceFox/
 
-The campaign is complete (milestone 5): seven stages, a route map with a hard branch, two all-range arenas and the final boss. Polish and balance are still ongoing. See `DESIGN.md` for the full plan.
+The campaign is complete: seven rail stages, a route map with a hard branch, nine bosses and a final fortress fight. Everything is on rails: no free flight. Polish and balance are still ongoing. See `DESIGN.md` for the full plan.
 
 ## Controls
 
@@ -26,11 +26,9 @@ Stage 1 ends with the **Bulwark**, an armored walking fortress: plain lasers bar
 
 ## Campaign
 
-The title screen has a *How to play* page, and every stage has its own music style (canyon, water, foundry, space, tunnel, warp, arena, final).
+The title screen has a *How to play* page, and every stage has its own music style (canyon, water, foundry, space, tunnel, warp, nebula, final).
 
-Pick a difficulty (Easy / Normal / Hard) and fly the **route map**: Ember Canyon, then a fork between *Drift Belt* (asteroids, easy route) and *Glasswater Reach* (hard route), then *Foundry Spine* (lava) or *Ghost Station* (tunnels). Each stage ends with a boss: Bulwark, Rockjaw, Tidecaller, Foundry Warden and Prism Sentinel. Then the all-range *Nebula Arena* (rival ace Scarlet Talon), the warp-lane *Gatewyrm Run* (fly through gold rings, then fight the serpent), the all-range *Regent's Fleet* (knock out the Hollow Queen's shield turrets, then her hull) and the final *Crown Core*, a three-phase fortress boss.
-
-**All-range arenas:** no rails. Left/right turn the ship, up/down pitch the nose (invert in Settings), the radar in the corner shows every contact (top = straight ahead), and the edge of the arena steers you back. Lasers bend a little toward the enemy nearest your reticle.
+Pick a difficulty (Easy / Normal / Hard) and fly the **route map**: Ember Canyon, then a fork between *Drift Belt* (asteroids, easy route) and *Glasswater Reach* (hard route), then *Foundry Spine* (lava) or *Ghost Station* (tunnels). Each stage ends with a boss: Bulwark, Rockjaw, Tidecaller, Foundry Warden and Prism Sentinel. Then *Nebula Reach* (a nebula gauntlet ending in the rival ace Scarlet Talon), the warp-lane *Gatewyrm Run* (fly through gold rings, then fight the serpent), *Regent's Fleet* (cut through the fleet, knock out the Hollow Queen's four shield turrets, then her hull) and the final *Crown Core*, a three-phase fortress boss.
 
 - **Medals:** Bronze, silver or gold from the share of enemies you destroyed. Gold on a stage opens the hard route after it.
 - **Credits and the hangar:** Stars, score and medals earn credits. Spend them between stages on laser core, shield cells, bomb bay, lock-on array, roll servos, boost cells and a star magnet, or restock bombs.

@@ -55,30 +55,6 @@
     ctx.strokeStyle = 'rgba(120,230,255,0.55)'; ctx.lineWidth = 1.2; ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
   }
 
-  /* radar: you are the centre, the top is straight ahead; dots are enemies (red), the boss (big) and pickups (gold) */
-  function drawRadar(ctx, g) {
-    const cx = W - 70, cy = 172, R = 54;
-    ctx.save();
-    ctx.fillStyle = 'rgba(2,8,26,0.7)'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
-    ctx.strokeStyle = 'rgba(120,230,255,0.55)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, R * 0.5, 0, TAU); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.strokeStyle = 'rgba(120,230,255,0.2)'; ctx.stroke();
-    ctx.fillStyle = '#7de8ff'; ctx.beginPath(); ctx.moveTo(cx, cy - 6); ctx.lineTo(cx + 4, cy + 4); ctx.lineTo(cx - 4, cy + 4); ctx.closePath(); ctx.fill();
-    const RNG = 4200;
-    for (const e of g.ents) {
-      if (e.t !== 'enemy' && e.t !== 'pickup' || e.dead) continue;
-      const dx = e.x, dz = e.z - C.SHIP_Z, d = Math.hypot(dx, dz);
-      let px = dx / RNG * R, py = -dz / RNG * R;
-      const l = Math.hypot(px, py);
-      if (l > R - 3) { px = px / l * (R - 3); py = py / l * (R - 3); }
-      const up = e.y > 200 ? -1 : e.y < -200 ? 1 : 0;
-      ctx.fillStyle = e.t === 'pickup' ? '#ffd24a' : e.boss ? '#ff5a8a' : e.kind === 'amine' ? '#ff9a3a' : '#ff4a4a';
-      const rr = e.boss ? 4.5 : e.t === 'pickup' ? 2 : 3;
-      ctx.beginPath(); ctx.arc(cx + px, cy + py, rr, 0, TAU); ctx.fill();
-      if (up) { ctx.fillRect(cx + px - 1, cy + py + up * (rr + 3), 2, 3); }
-    }
-    ctx.restore();
-  }
-
   HUD.draw = function (ctx, g) {
     if (g.demo || !g.ship) return;
     const s = g.ship;
@@ -131,8 +107,6 @@
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { ctx.moveTo(mx + dx * 13, my + dy * 13); ctx.lineTo(mx + dx * 21, my + dy * 21); }
       ctx.stroke(); ctx.restore();
     }
-    if (g.arena) drawRadar(ctx, g);
-    if (g.arena && G.arena.warn && g.phase === 'play') txt(ctx, 'RETURN TO THE ARENA', W / 2, 300, 24, '#ff8a6a', 'center', 900, 'rgba(255,100,60,0.9)');
     G.comms.draw(ctx, 20, 130);
     if (g.msg) {
       const m = g.msg, k = m.t / m.dur, a = k < 0.1 ? k / 0.1 : k > 0.8 ? Math.max(0, (1 - k) / 0.2) : 1;
