@@ -247,7 +247,16 @@
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     SP.draw(ctx, 'ship', fr.f, q.x, q.y, k, fr.flip, alpha, ang);
-    if (s.over > 0) { ctx.globalCompositeOperation = 'lighter'; SP.draw(ctx, 'ship', SP.SHIP.SHIELD, q.x, q.y, k * 1.02, false, 0.55 + 0.25 * Math.sin(g.t * 8)); ctx.globalCompositeOperation = 'source-over'; }
+    if (s.over > 0) {                                           /* overshield: a bubble around the ship (a second ship sprite here ghosted when banking or rolling) */
+      const R0 = 150 * k * 1.2, pulse = 0.5 + 0.2 * Math.sin(g.t * 8);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.16 + 0.1 * pulse; ctx.drawImage(G.gfx.glow('rgba(90,190,255,1)'), q.x - R0 * 1.5, q.y - R0 * 1.4, R0 * 3, R0 * 2.8);
+      ctx.globalAlpha = 0.45 + 0.3 * pulse; ctx.strokeStyle = 'rgba(150,225,255,1)'; ctx.lineWidth = Math.max(1.5, 3 * k);
+      ctx.beginPath(); ctx.ellipse(q.x, q.y, R0, R0 * 0.8, 0, 0, TAU); ctx.stroke();
+      ctx.globalAlpha = 0.5; ctx.lineWidth = Math.max(1, 2 * k);
+      for (let i = 0; i < 2; i++) { const a0 = g.t * 2.2 + i * Math.PI; ctx.beginPath(); ctx.ellipse(q.x, q.y, R0 * 0.94, R0 * 0.75, 0, a0, a0 + 0.9); ctx.stroke(); }
+      ctx.restore();
+    }
   }
 
   /* ---------- scene ---------- */
