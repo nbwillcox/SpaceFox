@@ -328,7 +328,17 @@
     if (Game.bot) botSteer(dt);
 
     /* --- ship --- */
-    const ax = I.axisX(), ay = I.axisY();
+    let ax = I.axisX(), ay = I.axisY();
+    if (!ax && !ay && I.mouseActive && G.settings.mouse && !Game.bot && Game.phase !== 'intro') {
+      if (Game.arena) {                                         /* the pointer's offset from the middle is a turn rate */
+        const dx = I.mx - 480, dy = I.my - 250;
+        ax = Math.abs(dx) < 22 ? 0 : clamp(dx / 280, -1, 1); ay = Math.abs(dy) < 22 ? 0 : clamp(-dy / 190, -1, 1);
+      } else {                                                  /* the ship chases the point under the pointer */
+        const sc2 = C.F / (C.F + C.SHIP_Z);
+        const tx = clamp((I.mx - C.VX) / (sc2 * 0.65), -C.BX, C.BX), ty = clamp((C.EYE - (I.my - C.VY) / sc2) / 0.65, C.BY0, C.BY1);
+        ax = clamp((tx - s.x) / 120, -1, 1); ay = clamp((ty - s.y) / 90, -1, 1);
+      }
+    }
     const spd = 560;
     if (!Game.arena) {
       s.vx += (ax * spd - s.vx) * Math.min(1, 9 * dt);

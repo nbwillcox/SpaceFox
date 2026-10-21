@@ -13,8 +13,8 @@
   <title>SpaceFox</title>
   <meta name="description" content="SpaceFox - a free retro-style rail shooter: pilot the Firebrand through canyons and fleets, barrel-roll to deflect fire, lock on, boost and take down the Regent.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305071a'/%3E%3Cpath d='M16 4l5 9 7-4-3 14H7L4 9l7 4z' fill='%23ff7a2e'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%2337e6ff'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css?v=27">
-  <link rel="stylesheet" href="css/mobile.css?v=27">
+  <link rel="stylesheet" href="css/style.css?v=28">
+  <link rel="stylesheet" href="css/mobile.css?v=28">
 </head>
 <body>
   <canvas id="game" aria-label="SpaceFox game screen"></canvas>
@@ -33,7 +33,7 @@
         <button id="btnScores">HIGH SCORES</button>
         <button id="btnSettings">SETTINGS</button>
       </div>
-      <p class="hint"><b>W A S D</b> / arrows: steer &nbsp; <b>Space</b>: fire &nbsp; <b>Q / E</b> or double-tap a side: barrel roll &nbsp; <b>Shift</b>: boost &nbsp; <b>Ctrl</b>: brake &nbsp; <b>B</b>: bomb &nbsp; <b>P</b>: pause</p>
+      <p class="hint"><b>W A S D</b> / arrows: steer &nbsp; <b>Space</b>: fire &nbsp; <b>Mouse</b>: move to steer, click to fire &nbsp; <b>Q / E</b> or double-tap a side: barrel roll &nbsp; <b>Shift</b>: boost &nbsp; <b>Ctrl</b>: brake &nbsp; <b>B</b>: bomb &nbsp; <b>P</b>: pause</p>
       <footer class="credit">Free to play and share &middot; <a href="https://github.com/nbwillcox/SpaceFox" target="_blank" rel="noopener">github.com/nbwillcox/SpaceFox</a> &middot; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></footer>
     </section>
 
@@ -57,6 +57,7 @@
         <label class="check"><input id="setShake" type="checkbox"> Screen shake</label>
         <label class="check"><input id="setReduced" type="checkbox"> Reduced motion (fewer flashes &amp; particles)</label>
         <label>Comms chatter <select id="setComms"><option value="full">Full</option><option value="minimal">Warnings only</option><option value="off">Off</option></select></label>
+        <label class="check"><input id="setMouse" type="checkbox"> Mouse: move to steer, click to fire, right-click to roll</label>
         <label class="check"><input id="setInvert" type="checkbox"> Invert pitch in all-range arenas (up = nose down)</label>
         <label class="check"><input id="setAuto" type="checkbox"> Rapid fire while FIRE is held (turns off charge lock-on)</label>
         <div class="keysec">
@@ -94,9 +95,9 @@
       <div class="howgrid">
         <div class="panel how">
           <h3>CONTROLS</h3>
-          <p><b>Steer</b> W A S D / arrows &middot; left stick</p>
-          <p><b>Fire</b> Space &middot; A. <i>Tap</i> to shoot, <i>hold</i> to charge a lock-on</p>
-          <p><b>Barrel roll</b> Q / E, or double-tap left / right &middot; LB / RB</p>
+          <p><b>Steer</b> mouse &middot; W A S D / arrows &middot; left stick</p>
+          <p><b>Fire</b> left click &middot; Space &middot; A. <i>Tap</i> to shoot, <i>hold</i> to charge a lock-on</p>
+          <p><b>Barrel roll</b> right click &middot; Q / E, or double-tap left / right &middot; LB / RB</p>
           <p><b>Boost / brake</b> Shift / Ctrl &middot; RT / LT</p>
           <p><b>Bomb</b> B &middot; B button &nbsp; <b>Pause</b> P / Esc &middot; Start</p>
           <p class="sm">On a phone: a floating stick on the left and buttons on the right. Everything can be rebound in Settings.</p>
@@ -183,26 +184,26 @@
 
   <noscript><p style="color:#fff;padding:2rem">SpaceFox needs JavaScript enabled.</p></noscript>
 
-  <script src="js/util.js?v=27"></script>
-  <script src="js/config.js?v=27"></script>
-  <script src="assets/atlas.js?v=27"></script>
-  <script src="js/audio.js?v=27"></script>
-  <script src="js/gfx.js?v=27"></script>
-  <script src="js/fx.js?v=27"></script>
-  <script src="js/input.js?v=27"></script>
-  <script src="js/scores.js?v=27"></script>
-  <script src="js/sprites.js?v=27"></script>
-  <script src="js/comms.js?v=27"></script>
-  <script src="js/stages.js?v=27"></script>
-  <script src="js/campaign.js?v=27"></script>
-  <script src="js/game.js?v=27"></script>
-  <script src="js/arena.js?v=27"></script>
-  <script src="js/render.js?v=27"></script>
-  <script src="js/hud.js?v=27"></script>
-  <script src="js/ui.js?v=27"></script>
-  <script src="js/flow.js?v=27"></script>
-  <script src="js/touchcfg.js?v=27"></script>
-  <script src="js/mobile.js?v=27"></script>
-  <script src="js/main.js?v=27"></script>
+  <script src="js/util.js?v=28"></script>
+  <script src="js/config.js?v=28"></script>
+  <script src="assets/atlas.js?v=28"></script>
+  <script src="js/audio.js?v=28"></script>
+  <script src="js/gfx.js?v=28"></script>
+  <script src="js/fx.js?v=28"></script>
+  <script src="js/input.js?v=28"></script>
+  <script src="js/scores.js?v=28"></script>
+  <script src="js/sprites.js?v=28"></script>
+  <script src="js/comms.js?v=28"></script>
+  <script src="js/stages.js?v=28"></script>
+  <script src="js/campaign.js?v=28"></script>
+  <script src="js/game.js?v=28"></script>
+  <script src="js/arena.js?v=28"></script>
+  <script src="js/render.js?v=28"></script>
+  <script src="js/hud.js?v=28"></script>
+  <script src="js/ui.js?v=28"></script>
+  <script src="js/flow.js?v=28"></script>
+  <script src="js/touchcfg.js?v=28"></script>
+  <script src="js/mobile.js?v=28"></script>
+  <script src="js/main.js?v=28"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@
 
   const KEY = 'spacefox.settings.v1';
   const DEFAULT_KEYS = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', fire: 'Space', rollL: 'KeyQ', rollR: 'KeyE', bomb: 'KeyB', boost: 'ShiftLeft', brake: 'ControlLeft', pause: 'KeyP' };
-  const defaults = { master: 0.8, music: 0.6, sfx: 0.9, bloom: true, shake: true, reduced: false, comms: 'full', autofire: false, invertY: false };
+  const defaults = { master: 0.8, music: 0.6, sfx: 0.9, bloom: true, shake: true, reduced: false, comms: 'full', autofire: false, invertY: false, mouse: true };
 
   const S = Object.assign({}, defaults);
   S.keys = Object.assign({}, DEFAULT_KEYS);

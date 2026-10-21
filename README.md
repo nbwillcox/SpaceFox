@@ -10,9 +10,9 @@ The campaign is complete (milestone 5): seven stages, a route map with a hard br
 
 | Action | Keys |
 | --- | --- |
-| Steer | `W A S D` or the arrow keys |
-| Fire | `Space`: tap for a shot, **hold to charge**, sweep up to 3 lock-ons, release for a homing volley (no target: a charged blast) |
-| Barrel roll | `Q` / `E`, or double-tap left / right: **deflects enemy shots back** at them while you spin |
+| Steer | Mouse (move the pointer), `W A S D` or the arrow keys |
+| Fire | Left click or `Space`: tap for a shot, **hold to charge**, sweep up to 3 lock-ons, release for a homing volley (no target: a charged blast) |
+| Barrel roll | Right click, `Q` / `E`, or double-tap left / right: **deflects enemy shots back** at them while you spin |
 | Boost / brake | `Shift` / `Ctrl` |
 | Bomb | `B` |
 | Pause | `P` or `Esc` |

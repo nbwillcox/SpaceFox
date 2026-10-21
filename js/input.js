@@ -1,7 +1,7 @@
 /* Flight controls. Every action has one rebindable key (Settings); arrows and the touch layer's F13-F22 codes always work as extras. Double-tapping left / right is a barrel roll. */
 (function (G) {
   'use strict';
-  const I = { held: {}, _roll: 0, _bomb: false, _pause: false, _any: false, _launch: false, capture: null };
+  const I = { mx: 480, my: 300, mouseActive: false, held: {}, _roll: 0, _bomb: false, _pause: false, _any: false, _launch: false, capture: null };
   const ACTIONS = ['up', 'down', 'left', 'right', 'fire', 'rollL', 'rollR', 'bomb', 'boost', 'brake', 'pause'];
   /* always-on aliases (touch buttons send F13-F22; arrow keys steer) */
   const EXTRA = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', F13: 'left', F14: 'right', F15: 'up', F16: 'down', F17: 'fire', F18: 'rollL', F19: 'rollR', F20: 'bomb', F21: 'boost', F22: 'brake' };
@@ -40,6 +40,7 @@
     const a = actionOf(c);
     if (a && !e.repeat) {
       I.held[a] = true;
+      if (a === 'left' || a === 'right' || a === 'up' || a === 'down') I.mouseActive = false;      /* the keyboard takes the ship back from the mouse */
       if (a === 'rollL') I._roll = -1;
       else if (a === 'rollR') I._roll = 1;
       else if (a === 'bomb') I._bomb = true;
@@ -55,9 +56,28 @@
   });
   window.addEventListener('keyup', (e) => { const a = actionOf(e.code); if (a) I.held[a] = false; });
   window.addEventListener('blur', () => I.clear());
+  /* mouse: move to steer (until a steering key is touched), left button fires (hold = charge), right button rolls toward the pointer */
+  function toGame(e) {
+    const v = G.view;
+    if (!v) return;
+    I.mx = (e.clientX - v.ox) / v.s; I.my = (e.clientY - v.oy) / v.s;
+  }
   I.bind = function (canvas) {
-    canvas.addEventListener('pointerdown', () => { I._any = true; });
+    canvas.addEventListener('pointerdown', (e) => {
+      I._any = true;
+      if (e.pointerType !== 'mouse' || !G.settings.mouse) return;
+      toGame(e); I.mouseActive = true;
+      if (e.button === 0) { I.held.fire = true; I._launch = true; }
+      else if (e.button === 2) I._roll = I.mx < 480 ? -1 : 1;
+      e.preventDefault();
+    });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener('pointerup', (e) => { if (e.pointerType === 'mouse' && e.button === 0 && G.settings.mouse) I.held.fire = false; });
+    window.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse' || !G.settings.mouse) return;
+      toGame(e);
+      if (Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) >= 2 && !I.held.left && !I.held.right && !I.held.up && !I.held.down) I.mouseActive = true;
+    });
   };
   /* gamepad: left stick / d-pad steer, A fire, B bomb, X or LB roll left, Y or RB roll right, LT brake, RT boost, Start pause */
   const pad = { prev: {}, on: false };

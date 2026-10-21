@@ -331,14 +331,36 @@
     }
     ctx.globalCompositeOperation = 'source-over';
   }
+  /* an enemy plasma bolt: a pulsing orb that swells as it closes, a chain of fading afterimages stretching back toward where it came from, and a ring that contracts as it arrives */
   function drawEShot(ctx, g, sh) {
-    const q = g.proj(sh.x, sh.y, sh.z), r = sh.r * 2.6 * q.s;
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.drawImage(G.gfx.glow('rgba(255,70,170,1)'), q.x - r * 1.5, q.y - r * 1.5, r * 3, r * 3);
-    ctx.globalCompositeOperation = 'source-over';
-    const ang = Math.atan2(q.y - C.VY, q.x - C.VX);
-    const k = (sh.r * 3.4 / SP.size('enemy', 11).w) * q.s * 1.6;
-    SP.draw(ctx, 'enemy', SP.EN.SHOT, q.x, q.y, k, false, 1, ang);
+    const sc = g.arena ? g.scroll : 0;
+    const q = g.proj(sh.x, sh.y, sh.z);
+    if (q.s <= 0.04) return;
+    const big = sh.size || 1, R = sh.r * 2.1 * q.s, pulse = 1 + 0.12 * Math.sin(g.t * 24 + sh.x);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let i = 5; i >= 1; i--) {
+      const dt = i * 0.032, p = g.proj(sh.x - sh.vx * dt, sh.y - sh.vy * dt, sh.z - (sh.vz - sc) * dt);
+      if (p.s <= 0.03) continue;
+      const rr = sh.r * (2.0 - i * 0.22) * p.s;
+      if (rr < 1) continue;
+      ctx.globalAlpha = 0.5 - i * 0.075;
+      ctx.drawImage(G.gfx.glow('rgba(255,60,150,1)'), p.x - rr * 1.6, p.y - rr * 1.6, rr * 3.2, rr * 3.2);
+    }
+    ctx.globalAlpha = 1;
+    ctx.drawImage(G.gfx.glow('rgba(255,70,170,1)'), q.x - R * 2.1 * pulse, q.y - R * 2.1 * pulse, R * 4.2 * pulse, R * 4.2 * pulse);
+    ctx.drawImage(G.gfx.glow('rgba(255,170,230,1)'), q.x - R * 1.2, q.y - R * 1.2, R * 2.4, R * 2.4);
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.arc(q.x, q.y, Math.max(1.5, R * 0.42), 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,120,210,0.85)'; ctx.lineWidth = Math.max(1, 2.2 * q.s * big);
+    const spin = g.t * 7 + sh.y;
+    ctx.beginPath(); ctx.arc(q.x, q.y, R * 0.95, spin, spin + 4.2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(q.x, q.y, R * 0.7, -spin * 1.3, -spin * 1.3 + 3.4); ctx.stroke();
+    const dz = sh.z - C.SHIP_Z;
+    if (dz > 0 && dz < 900) {
+      const k = 1 - dz / 900, ring = R * (3.2 - 2.2 * k);
+      ctx.globalAlpha = 0.25 + 0.5 * k; ctx.strokeStyle = 'rgba(255,200,230,1)'; ctx.lineWidth = Math.max(1, 2 * q.s);
+      ctx.beginPath(); ctx.arc(q.x, q.y, ring, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
   }
   const icons = {};
   function pickupIcon(kind) {
