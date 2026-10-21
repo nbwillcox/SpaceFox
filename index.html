@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05071a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SpaceFox">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>SpaceFox</title>
+  <meta name="description" content="SpaceFox - a free retro-style rail shooter: pilot the Firebrand through canyons and fleets, barrel-roll to deflect fire, lock on, boost and take down the Regent.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305071a'/%3E%3Cpath d='M16 4l5 9 7-4-3 14H7L4 9l7 4z' fill='%23ff7a2e'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%2337e6ff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css?v=1">
+  <link rel="stylesheet" href="css/mobile.css?v=1">
+</head>
+<body>
+  <canvas id="game" aria-label="SpaceFox game screen"></canvas>
+
+  <div id="ui">
+    <section id="title" class="screen">
+      <h1 class="logo"><span class="l1">SPACE</span><span class="l2">FOX</span></h1>
+      <p class="tag">Barrel-roll through the Hearth Reach.</p>
+      <div class="menu">
+        <button id="btnStart" class="primary">START GAME</button>
+        <button id="btnScores">HIGH SCORES</button>
+        <button id="btnSettings">SETTINGS</button>
+      </div>
+      <p class="hint"><b>W A S D</b> / arrows: steer &nbsp; <b>Space</b>: fire &nbsp; <b>Q / E</b> or double-tap a side: barrel roll &nbsp; <b>Shift</b>: boost &nbsp; <b>Ctrl</b>: brake &nbsp; <b>B</b>: bomb &nbsp; <b>P</b>: pause</p>
+      <footer class="credit">Free to play and share &middot; <a href="https://github.com/nbwillcox/SpaceFox" target="_blank" rel="noopener">github.com/nbwillcox/SpaceFox</a> &middot; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></footer>
+    </section>
+
+    <section id="pause" class="screen hidden">
+      <h2>PAUSED</h2>
+      <div class="menu">
+        <button id="btnResume" class="primary">RESUME</button>
+        <button id="btnPauseSettings">SETTINGS</button>
+        <button id="btnQuit">QUIT TO TITLE</button>
+      </div>
+    </section>
+
+    <section id="settings" class="screen hidden">
+      <h2>SETTINGS</h2>
+      <div class="panel">
+        <label>Master volume <input id="setMaster" type="range" min="0" max="1" step="0.05"></label>
+        <label>Music volume <input id="setMusic" type="range" min="0" max="1" step="0.05"></label>
+        <label>Effects volume <input id="setSfx" type="range" min="0" max="1" step="0.05"></label>
+        <label class="check"><input id="setBloom" type="checkbox"> Bloom glow</label>
+        <label class="check"><input id="setShake" type="checkbox"> Screen shake</label>
+        <label class="check"><input id="setReduced" type="checkbox"> Reduced motion (fewer flashes &amp; particles)</label>
+        <div class="keysec">
+          <p class="keyhead">KEY BINDINGS <span id="keyNote">click a key, then press the new one (Esc cancels)</span></p>
+          <div class="keygrid">
+            <label>Steer up <button type="button" class="keybtn" data-act="up"></button></label>
+            <label>Steer down <button type="button" class="keybtn" data-act="down"></button></label>
+            <label>Steer left <button type="button" class="keybtn" data-act="left"></button></label>
+            <label>Steer right <button type="button" class="keybtn" data-act="right"></button></label>
+            <label>Fire <button type="button" class="keybtn" data-act="fire"></button></label>
+            <label>Roll left <button type="button" class="keybtn" data-act="rollL"></button></label>
+            <label>Roll right <button type="button" class="keybtn" data-act="rollR"></button></label>
+            <label>Bomb <button type="button" class="keybtn" data-act="bomb"></button></label>
+            <label>Boost <button type="button" class="keybtn" data-act="boost"></button></label>
+            <label>Brake <button type="button" class="keybtn" data-act="brake"></button></label>
+            <label>Pause <button type="button" class="keybtn" data-act="pause"></button></label>
+          </div>
+          <button type="button" id="btnKeyReset" class="small">RESET KEYS</button>
+        </div>
+      </div>
+      <div class="menu"><button id="btnSettingsBack" class="primary">BACK</button></div>
+    </section>
+
+    <section id="scores" class="screen hidden">
+      <h2>HIGH SCORES</h2>
+      <ol id="scoreList" class="scorelist"></ol>
+      <div class="menu">
+        <button id="btnScoresPlay" class="primary">PLAY AGAIN</button>
+        <button id="btnScoresBack">TITLE</button>
+      </div>
+    </section>
+
+    <section id="gameover" class="screen hidden">
+      <h2 id="goTitle" class="over">GAME OVER</h2>
+      <p class="final">Score <b id="goScore">0</b> &middot; Stage <b id="goStage">1</b></p>
+      <div id="goEntry" class="entry hidden">
+        <p class="newhs">NEW HIGH SCORE! Enter your initials</p>
+        <input id="goName" type="text" maxlength="3" autocomplete="off" spellcheck="false" aria-label="Your initials">
+        <div class="menu"><button id="btnSaveScore" class="primary">SAVE SCORE</button></div>
+      </div>
+      <div id="goButtons" class="menu">
+        <button id="btnRetry" class="primary">PLAY AGAIN</button>
+        <button id="btnGoTitle">TITLE</button>
+      </div>
+    </section>
+  </div>
+
+  <noscript><p style="color:#fff;padding:2rem">SpaceFox needs JavaScript enabled.</p></noscript>
+
+  <script src="js/util.js?v=1"></script>
+  <script src="js/config.js?v=1"></script>
+  <script src="assets/atlas.js?v=1"></script>
+  <script src="js/audio.js?v=1"></script>
+  <script src="js/gfx.js?v=1"></script>
+  <script src="js/fx.js?v=1"></script>
+  <script src="js/input.js?v=1"></script>
+  <script src="js/scores.js?v=1"></script>
+  <script src="js/sprites.js?v=1"></script>
+  <script src="js/stages.js?v=1"></script>
+  <script src="js/game.js?v=1"></script>
+  <script src="js/render.js?v=1"></script>
+  <script src="js/hud.js?v=1"></script>
+  <script src="js/ui.js?v=1"></script>
+  <script src="js/touchcfg.js?v=1"></script>
+  <script src="js/mobile.js?v=1"></script>
+  <script src="js/main.js?v=1"></script>
+</body>
+</html>
