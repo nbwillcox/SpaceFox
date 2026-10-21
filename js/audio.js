@@ -22,7 +22,12 @@
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -16; comp.ratio.value = 6; comp.attack.value = 0.004; comp.release.value = 0.18;
     master = ctx.createGain(); sfxBus = ctx.createGain(); musicBus = ctx.createGain();
-    sfxBus.connect(master); musicBus.connect(master); master.connect(comp); comp.connect(ctx.destination);
+    sfxBus.connect(master); musicBus.connect(master); master.connect(comp);
+    /* make-up gain, then a hard limiter so stacked explosions cannot clip */
+    const makeup = ctx.createGain(); makeup.gain.value = 1.75;
+    const lim = ctx.createDynamicsCompressor(); lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.08;
+    comp.connect(makeup); makeup.connect(lim); lim.connect(ctx.destination);
+    A.analyser = ctx.createAnalyser(); A.analyser.fftSize = 2048; lim.connect(A.analyser);      /* a tap for level checks (tests) */
     const len = ctx.sampleRate * 2;
     noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
@@ -90,8 +95,8 @@
   X.babble = (who, ch) => {
     if (!gate('babble', 38)) return;
     const n = ch.toLowerCase().charCodeAt(0) % 9;
-    if (who === 'moss') { const f = 150 + n * 22; tone({ type: 'sawtooth', f0: f * 1.25, f1: f * 0.8, dur: 0.07, vol: 0.05 }); tone({ type: 'square', f0: f * 2.1, f1: f * 1.4, dur: 0.04, vol: 0.02 }); }
-    else if (who === 'vale') { const f = 330 + n * 28; tone({ type: 'triangle', f0: f, f1: f * 1.06, dur: 0.07, vol: 0.07 }); }
+    if (who === 'moss') { const f = 150 + n * 22; tone({ type: 'sawtooth', f0: f * 1.25, f1: f * 0.8, dur: 0.07, vol: 0.065 }); tone({ type: 'square', f0: f * 2.1, f1: f * 1.4, dur: 0.04, vol: 0.025 }); }
+    else if (who === 'vale') { const f = 330 + n * 28; tone({ type: 'triangle', f0: f, f1: f * 1.06, dur: 0.07, vol: 0.085 }); }
     else { const f = 260 + n * 30; tone({ type: 'square', f0: f, f1: f * 0.9, dur: 0.06, vol: 0.04 }); }
   };
   X.rescue = () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone({ type: 'triangle', f0: f, dur: 0.14, vol: 0.12, delay: i * 0.07 })); tone({ type: 'square', f0: 262, dur: 0.5, vol: 0.06, delay: 0.1 }); };
@@ -175,12 +180,12 @@
   function schedStep(t, s) {
     const S = M.style, bar = (s >> 4) & 3, st = s & 15, root = freq(55, S.prog[bar] + S.root + M.key), sx = 60 / M.tempo / 4;
     const title = M.mode === 'title', boss = M.mode === 'boss';
-    const bv = S.soft ? 0.1 : S.heavy ? 0.17 : 0.14;
+    const bv = S.soft ? 0.14 : S.heavy ? 0.17 : 0.14;
     if (S.bass[st] >= 0) {
       tone({ type: S.bw, f0: freq(root, S.bass[st]), dur: sx * (S.soft ? 3 : 1.7), vol: bv, bus: L.bass, at: t });
       if (S.heavy || S.epic) tone({ type: 'sine', f0: freq(root, S.bass[st]) * 0.5, dur: sx * 1.8, vol: 0.12, bus: L.bass, at: t });
     }
-    if (st % S.arpEvery === 0 && S.arp[st] >= 0 && (!title || st % 2 === 0)) tone({ type: S.aw, f0: freq(root * 4, S.arp[st]), dur: sx * 0.85, vol: S.soft ? 0.045 : title ? 0.04 : 0.05, bus: L.arp, at: t });
+    if (st % S.arpEvery === 0 && S.arp[st] >= 0 && (!title || st % 2 === 0)) tone({ type: S.aw, f0: freq(root * 4, S.arp[st]), dur: sx * 0.85, vol: S.soft ? 0.058 : title ? 0.04 : 0.05, bus: L.arp, at: t });
     if (!title && S.lead[st] >= 0 && ((bar & 1) || boss || S.epic)) {
       const f = freq(root * 4, S.lead[st]);
       tone({ type: S.lw, f0: f, dur: sx * 2, vol: S.epic ? 0.085 : 0.075, bus: L.lead, attack: 0.01, at: t });
