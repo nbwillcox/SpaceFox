@@ -86,7 +86,7 @@
       $(id).addEventListener('input', (e) => { S[sliders[id]] = parseFloat(e.target.value); S.save(); A.applyVolumes(); });
       $(id).addEventListener('change', () => A.sfx.blip());
     }
-    const checks = { setBloom: 'bloom', setShake: 'shake', setReduced: 'reduced' };
+    const checks = { setBloom: 'bloom', setShake: 'shake', setReduced: 'reduced', setAuto: 'autofire' };
     for (const id in checks) {
       $(id).checked = !!S[checks[id]];
       $(id).addEventListener('change', (e) => { S[checks[id]] = e.target.checked; S.save(); A.sfx.blip(); });

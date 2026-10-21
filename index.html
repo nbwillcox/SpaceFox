@@ -13,8 +13,8 @@
   <title>SpaceFox</title>
   <meta name="description" content="SpaceFox - a free retro-style rail shooter: pilot the Firebrand through canyons and fleets, barrel-roll to deflect fire, lock on, boost and take down the Regent.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305071a'/%3E%3Cpath d='M16 4l5 9 7-4-3 14H7L4 9l7 4z' fill='%23ff7a2e'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%2337e6ff'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css?v=1">
-  <link rel="stylesheet" href="css/mobile.css?v=1">
+  <link rel="stylesheet" href="css/style.css?v=2">
+  <link rel="stylesheet" href="css/mobile.css?v=2">
 </head>
 <body>
   <canvas id="game" aria-label="SpaceFox game screen"></canvas>
@@ -50,6 +50,7 @@
         <label class="check"><input id="setBloom" type="checkbox"> Bloom glow</label>
         <label class="check"><input id="setShake" type="checkbox"> Screen shake</label>
         <label class="check"><input id="setReduced" type="checkbox"> Reduced motion (fewer flashes &amp; particles)</label>
+        <label class="check"><input id="setAuto" type="checkbox"> Rapid fire while FIRE is held (turns off charge lock-on)</label>
         <div class="keysec">
           <p class="keyhead">KEY BINDINGS <span id="keyNote">click a key, then press the new one (Esc cancels)</span></p>
           <div class="keygrid">
@@ -97,22 +98,22 @@
 
   <noscript><p style="color:#fff;padding:2rem">SpaceFox needs JavaScript enabled.</p></noscript>
 
-  <script src="js/util.js?v=1"></script>
-  <script src="js/config.js?v=1"></script>
-  <script src="assets/atlas.js?v=1"></script>
-  <script src="js/audio.js?v=1"></script>
-  <script src="js/gfx.js?v=1"></script>
-  <script src="js/fx.js?v=1"></script>
-  <script src="js/input.js?v=1"></script>
-  <script src="js/scores.js?v=1"></script>
-  <script src="js/sprites.js?v=1"></script>
-  <script src="js/stages.js?v=1"></script>
-  <script src="js/game.js?v=1"></script>
-  <script src="js/render.js?v=1"></script>
-  <script src="js/hud.js?v=1"></script>
-  <script src="js/ui.js?v=1"></script>
-  <script src="js/touchcfg.js?v=1"></script>
-  <script src="js/mobile.js?v=1"></script>
-  <script src="js/main.js?v=1"></script>
+  <script src="js/util.js?v=2"></script>
+  <script src="js/config.js?v=2"></script>
+  <script src="assets/atlas.js?v=2"></script>
+  <script src="js/audio.js?v=2"></script>
+  <script src="js/gfx.js?v=2"></script>
+  <script src="js/fx.js?v=2"></script>
+  <script src="js/input.js?v=2"></script>
+  <script src="js/scores.js?v=2"></script>
+  <script src="js/sprites.js?v=2"></script>
+  <script src="js/stages.js?v=2"></script>
+  <script src="js/game.js?v=2"></script>
+  <script src="js/render.js?v=2"></script>
+  <script src="js/hud.js?v=2"></script>
+  <script src="js/ui.js?v=2"></script>
+  <script src="js/touchcfg.js?v=2"></script>
+  <script src="js/mobile.js?v=2"></script>
+  <script src="js/main.js?v=2"></script>
 </body>
 </html>

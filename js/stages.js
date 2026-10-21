@@ -54,6 +54,12 @@
       const w = tier === 0 ? [0, 0, 1, 2, 3, 4, 5, 7] : tier === 1 ? [0, 1, 2, 3, 4, 5, 6, 7, 8] : [0, 1, 1, 2, 3, 4, 5, 6, 6, 7, 8, 8];
       d += deck[pick(w)]() + 400;
     }
+    ev.push({ d: 9500, e: 'pickup', kind: 'laser', x: 60, y: 40 });
+    ev.push({ d: 22000, e: 'pickup', kind: 'bomb', x: -140, y: 30 });
+    ev.push({ d: 38000, e: 'pickup', kind: 'laser', x: 120, y: 60 });
+    ev.push({ d: 61000, e: 'pickup', kind: 'bomb', x: 100, y: 40 });
+    ev.push({ d: 75000, e: 'pickup', kind: 'life', x: 0, y: 60 });
+    ev.push({ d: 90000, e: 'pickup', kind: 'bomb', x: -60, y: 30 });
     ev.push({ d: 30000, e: 'pickup', kind: 'repair', x: -120, y: 40 });
     ev.push({ d: 52000, e: 'pickup', kind: 'shield', x: 140, y: 30 });
     ev.push({ d: 70000, e: 'pickup', kind: 'repair', x: 0, y: 50 });

@@ -4,18 +4,20 @@ A free, retro-flavored on-rails space shooter with neon-meets-painted art: pilot
 
 **Play it in your browser:** https://nbwillcox.github.io/SpaceFox/
 
-Work in progress (milestone 1: flight slice). See `DESIGN.md` for the full plan.
+Work in progress (milestone 2: weapons). See `DESIGN.md` for the full plan.
 
 ## Controls
 
 | Action | Keys |
 | --- | --- |
 | Steer | `W A S D` or the arrow keys |
-| Fire | `Space` (hold) |
-| Barrel roll | `Q` / `E`, or double-tap left / right |
+| Fire | `Space`: tap for a shot, **hold to charge**, sweep up to 3 lock-ons, release for a homing volley (no target: a charged blast) |
+| Barrel roll | `Q` / `E`, or double-tap left / right: **deflects enemy shots back** at them while you spin |
 | Boost / brake | `Shift` / `Ctrl` |
 | Bomb | `B` |
 | Pause | `P` or `Esc` |
+
+Pickups: laser upgrades (twin, then hyper), bombs, repair, overshield, boost refill, extra retries and stars. Settings has *Rapid fire while FIRE is held* (default on for phones) if you prefer holding to charging.
 
 All of these can be changed in **Settings > Key bindings**.
 

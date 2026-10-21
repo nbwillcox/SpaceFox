@@ -75,7 +75,7 @@
     const rx = W - 20 - (window.TK && window.TK.on ? 56 : 0);          /* the touch pause button sits in the corner */
     txt(ctx, 'RETRIES', rx, 18, 11, '#7de8ff', 'right', 800);
     for (let i = 0; i < Math.max(0, g.retries); i++) G.sprites.draw(ctx, 'ship', 0, rx - 10 - i * 32, 36, 0.12);
-    txt(ctx, 'BOMBS ' + g.bombs, rx, 64, 12, '#ff9a6a', 'right', 800);
+    txt(ctx, 'LASER ' + ['I', 'II', 'III'][g.tier - 1] + '   BOMBS ' + g.bombs, rx, 64, 12, '#ff9a6a', 'right', 800);
     /* stage progress */
     const f = U.clamp(g.dist / g.stage.length, 0, 1);
     ctx.fillStyle = 'rgba(0,10,30,0.6)'; ctx.fillRect(W / 2 - 150, H - 20, 300, 6);

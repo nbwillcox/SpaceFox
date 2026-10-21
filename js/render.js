@@ -136,6 +136,8 @@
     for (const e of g.ents) list.push(e);
     for (const e of g.eshots) list.push({ t: 'eshot', z: e.z, e });
     for (const e of g.shots) list.push({ t: 'laser', z: e.z, e });
+    for (const e of g.missiles) if (e.age >= 0) list.push({ t: 'missile', z: e.z, e });
+    for (const e of g.refl) list.push({ t: 'refl', z: e.z, e });
     list.push({ t: 'ship', z: C.SHIP_Z });
     list.sort((a, b) => (b.t === 'box' ? b.z + b.depth * 0.5 : b.z) - (a.t === 'box' ? a.z + a.depth * 0.5 : a.z));
     for (const it of list) {
@@ -143,23 +145,32 @@
         case 'ship': drawShip(ctx, g); break;
         case 'box': drawBox(ctx, g, it); break;
         case 'laser': drawLaser(ctx, g, it.e); break;
+        case 'missile': drawMissile(ctx, g, it.e); break;
+        case 'refl': drawRefl(ctx, g, it.e); break;
         case 'eshot': drawEShot(ctx, g, it.e); break;
         case 'pickup': drawPickup(ctx, g, it); break;
         case 'enemy': drawEnemy(ctx, g, it); break;
       }
     }
     G.fx.draw(ctx, g.proj);
-    if (!g.ship.dead && g.phase !== 'over') drawReticle(ctx, g);
+    if (!g.ship.dead && g.phase !== 'over') { drawLocks(ctx, g); drawReticle(ctx, g); drawCharge(ctx, g); }
+    if (g.bombFx) drawBombFx(ctx, g);
     G.fx.drawText(ctx);
   };
 
   function drawLaser(ctx, g, sh) {
-    const a = g.proj(sh.x, sh.y, sh.z), b = g.proj(sh.x, sh.y, Math.max(-100, sh.z - 220));
     ctx.globalCompositeOperation = 'lighter';
     ctx.lineCap = 'round';
-    for (const ox of [-16, 16]) {
+    if (sh.big) {
+      const p = g.proj(sh.x, sh.y, sh.z), r = 70 * p.s;
+      ctx.drawImage(G.gfx.glow('rgba(90,200,255,1)'), p.x - r * 2, p.y - r * 2, r * 4, r * 4);
+      ctx.drawImage(G.gfx.glow('rgba(255,255,255,1)'), p.x - r, p.y - r, r * 2, r * 2);
+      ctx.globalCompositeOperation = 'source-over';
+      return;
+    }
+    for (const ox of (sh.dmg > 1 ? [-5, 5] : [-5, 5])) {
       const p = g.proj(sh.x + ox, sh.y, sh.z), q = g.proj(sh.x + ox, sh.y, Math.max(-100, sh.z - 220));
-      ctx.strokeStyle = 'rgba(60,190,255,0.85)'; ctx.lineWidth = Math.max(2, 9 * p.s);
+      ctx.strokeStyle = sh.dmg > 1 ? 'rgba(255,170,70,0.9)' : 'rgba(60,190,255,0.85)'; ctx.lineWidth = Math.max(2, (sh.dmg > 1 ? 11 : 8) * p.s);
       ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
       ctx.strokeStyle = 'rgba(230,250,255,1)'; ctx.lineWidth = Math.max(1, 3.5 * p.s);
       ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
@@ -175,8 +186,33 @@
     const k = (sh.r * 3.4 / SP.size('enemy', 11).w) * q.s * 1.6;
     SP.draw(ctx, 'enemy', SP.EN.SHOT, q.x, q.y, k, false, 1, ang);
   }
+  const icons = {};
+  function pickupIcon(kind) {
+    if (icons[kind]) return icons[kind];
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const x = c.getContext('2d'); x.translate(64, 64); x.lineJoin = 'round'; x.lineCap = 'round';
+    const col = { bomb: ['#ff9a3d', '#ffd9a0', '#7a2c00'], laser: ['#37c6ff', '#c8f2ff', '#06406a'], life: ['#ffd24a', '#fff2b0', '#6a4a00'] }[kind];
+    x.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; x.lineTo(Math.cos(a) * 58, Math.sin(a) * 58); } x.closePath();
+    const g = x.createLinearGradient(0, -58, 0, 58); g.addColorStop(0, col[1]); g.addColorStop(0.5, col[0]); g.addColorStop(1, col[2]);
+    x.fillStyle = g; x.fill(); x.strokeStyle = '#e8f4ff'; x.lineWidth = 5; x.stroke();
+    x.fillStyle = 'rgba(8,12,30,0.88)'; x.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; x.lineTo(Math.cos(a) * 42, Math.sin(a) * 42); } x.closePath(); x.fill();
+    x.strokeStyle = col[1]; x.fillStyle = col[1]; x.lineWidth = 6;
+    if (kind === 'bomb') { x.beginPath(); x.arc(0, 6, 17, 0, 6.3); x.fill(); x.beginPath(); x.moveTo(8, -8); x.quadraticCurveTo(16, -22, 24, -20); x.stroke(); x.fillStyle = '#ffec9a'; x.beginPath(); x.arc(26, -22, 5, 0, 6.3); x.fill(); }
+    else if (kind === 'laser') { x.beginPath(); x.moveTo(-12, -22); x.lineTo(-12, 22); x.moveTo(12, -22); x.lineTo(12, 22); x.stroke(); x.beginPath(); x.moveTo(-12, -22); x.lineTo(-18, -10); x.moveTo(12, -22); x.lineTo(18, -10); x.stroke(); }
+    else { x.beginPath(); x.moveTo(0, -24); x.lineTo(20, 18); x.lineTo(0, 8); x.lineTo(-20, 18); x.closePath(); x.fill(); }
+    return (icons[kind] = c);
+  }
   function drawPickup(ctx, g, p) {
     if (p.z < -150) return;
+    if (p.kind === 'bomb' || p.kind === 'laser' || p.kind === 'life') {
+      const q = g.proj(p.x, p.y, p.z), fa = clamp((C.ZFAR - p.z) / 500, 0, 1), bob = Math.sin(p.age * 4) * 6 * q.s, w = 84 * q.s;
+      ctx.globalCompositeOperation = 'lighter';
+      const col = p.kind === 'bomb' ? 'rgba(255,150,60,1)' : p.kind === 'laser' ? 'rgba(60,190,255,1)' : 'rgba(255,210,80,1)';
+      ctx.globalAlpha = 0.5 * fa; ctx.drawImage(G.gfx.glow(col), q.x - w * 1.5, q.y + bob - w * 1.5, w * 3, w * 3);
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = fa; ctx.drawImage(pickupIcon(p.kind), q.x - w / 2, q.y + bob - w / 2, w, w); ctx.globalAlpha = 1;
+      return;
+    }
     const q = g.proj(p.x, p.y, p.z), spec = { star: { f: 9, w: 74 }, shield: { f: 6, w: 84 }, boost: { f: 7, w: 80 }, repair: { f: 8, w: 80 } }[p.kind];
     const fa = clamp((C.ZFAR - p.z) / 500, 0, 1), bob = Math.sin(p.age * 4) * 6 * q.s;
     ctx.globalCompositeOperation = 'lighter';
@@ -199,6 +235,57 @@
     else if (e.kind === 'mine' || e.kind === 'crystal') rot = e.kind === 'mine' ? e.rot : Math.sin(e.rot) * 0.2;
     SP.draw(ctx, 'enemy', spec.frame, q.x, q.y, k, false, fa, rot);
     if (e.flash > 0) { ctx.globalCompositeOperation = 'lighter'; SP.draw(ctx, 'enemy', spec.frame, q.x, q.y, k, false, 0.7 * fa, rot); ctx.globalCompositeOperation = 'source-over'; }
+  }
+  function drawMissile(ctx, g, m) {
+    const p = g.proj(m.x, m.y, m.z), q = g.proj(m.x, m.y, Math.max(-100, m.z - 260)), r = 38 * p.s;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = 'rgba(255,170,70,0.8)'; ctx.lineWidth = Math.max(2, 12 * p.s); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    ctx.drawImage(G.gfx.glow('rgba(255,210,120,1)'), p.x - r * 1.6, p.y - r * 1.6, r * 3.2, r * 3.2);
+    ctx.drawImage(G.gfx.glow('rgba(255,255,255,1)'), p.x - r * 0.6, p.y - r * 0.6, r * 1.2, r * 1.2);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  function drawRefl(ctx, g, r) {
+    const p = g.proj(r.x, r.y, r.z), s = 52 * r.size * p.s;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.drawImage(G.gfx.glow('rgba(110,225,255,1)'), p.x - s * 1.5, p.y - s * 1.5, s * 3, s * 3);
+    ctx.drawImage(G.gfx.glow('rgba(255,255,255,1)'), p.x - s * 0.5, p.y - s * 0.5, s, s);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  function drawLocks(ctx, g) {
+    const s = g.ship;
+    if (!s.charging) return;
+    ctx.save(); ctx.lineWidth = 2.5;
+    const nose = g.proj(s.x, s.y, C.SHIP_Z + 60);
+    s.locks.forEach((e, i) => {
+      const q = g.proj(e.x, e.y, e.z), r = Math.max(14, g.EN[e.kind].r * 1.15 * q.s), pulse = 1 + 0.12 * Math.sin(g.t * 18 + i);
+      ctx.strokeStyle = 'rgba(255,110,80,1)'; ctx.globalAlpha = 1; ctx.lineWidth = 3.5;
+      const b = r * pulse, c = b * 0.45;
+      ctx.beginPath();
+      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.moveTo(q.x + sx * b, q.y + sy * (b - c)); ctx.lineTo(q.x + sx * b, q.y + sy * b); ctx.lineTo(q.x + sx * (b - c), q.y + sy * b); }
+      ctx.stroke();
+      ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.moveTo(nose.x, nose.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+    });
+    ctx.restore();
+  }
+  function drawCharge(ctx, g) {
+    const s = g.ship;
+    if (!s.charging) return;
+    const q = g.proj(s.x, s.y, C.SHIP_Z + 70), k = s.chargeT / 1.4, r = (14 + 34 * k) * q.s * 1.7;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.4 + 0.5 * k; ctx.drawImage(G.gfx.glow(k > 0.7 ? 'rgba(255,220,120,1)' : 'rgba(90,200,255,1)'), q.x - r * 2.2, q.y - r * 2.2, r * 4.4, r * 4.4);
+    ctx.globalAlpha = 1; ctx.strokeStyle = k > 0.7 ? 'rgba(255,230,140,0.95)' : 'rgba(150,230,255,0.9)'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(q.x, q.y, r, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, k)); ctx.stroke();
+    ctx.restore();
+  }
+  function drawBombFx(ctx, g) {
+    const b = g.bombFx, k = b.t / 0.7, q = g.proj(b.x, b.y, C.SHIP_Z);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 1 - k; ctx.strokeStyle = 'rgba(255,220,150,1)'; ctx.lineWidth = 16 * (1 - k) + 2;
+    ctx.beginPath(); ctx.arc(q.x, q.y, 60 + k * 900, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,150,60,1)'; ctx.lineWidth = 8 * (1 - k) + 1;
+    ctx.beginPath(); ctx.arc(q.x, q.y, 30 + k * 640, 0, TAU); ctx.stroke();
+    ctx.restore();
   }
   function drawReticle(ctx, g) {
     const s = g.ship;

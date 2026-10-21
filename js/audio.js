@@ -78,6 +78,13 @@
 
   const X = A.sfx;
   X.laser = (tier) => { if (gate('laser', 45)) { tone({ type: 'sawtooth', f0: 1500 + (tier || 0) * 150, f1: 300, dur: 0.1, vol: 0.06 }); tone({ type: 'square', f0: 900, f1: 200, dur: 0.07, vol: 0.035 }); } };
+  X.charge = () => { tone({ type: 'sine', f0: 220, f1: 880, dur: 1.2, vol: 0.07 }); tone({ type: 'triangle', f0: 440, f1: 1760, dur: 1.2, vol: 0.04 }); };
+  X.lock = (n) => { tone({ type: 'square', f0: 900 + (n || 0) * 140, dur: 0.07, vol: 0.08 }); tone({ type: 'triangle', f0: 1800 + (n || 0) * 200, dur: 0.05, vol: 0.05, delay: 0.04 }); };
+  X.missile = () => { noise({ type: 'bandpass', f0: 2200, f1: 500, dur: 0.4, vol: 0.2, q: 1.2 }); tone({ type: 'sawtooth', f0: 700, f1: 200, dur: 0.3, vol: 0.1 }); };
+  X.deflect = () => { tone({ type: 'square', f0: 1800, f1: 900, dur: 0.12, vol: 0.09 }); tone({ type: 'triangle', f0: 2600, f1: 1200, dur: 0.1, vol: 0.07 }); };
+  X.bomb = () => { noise({ f0: 1400, f1: 40, dur: 1.4, vol: 0.55 }); tone({ type: 'sine', f0: 200, f1: 24, dur: 1.2, vol: 0.5 }); tone({ type: 'sawtooth', f0: 1600, f1: 80, dur: 0.7, vol: 0.12 }); };
+  X.weaponUp = () => { tone({ type: 'triangle', f0: 260, f1: 1300, dur: 0.3, vol: 0.16 }); [659, 880, 1175, 1568].forEach((f, i) => tone({ type: 'square', f0: f, dur: 0.1, vol: 0.08, delay: 0.12 + i * 0.05 })); };
+  X.bonus = (n) => { if (gate('bonus', 60)) tone({ type: 'square', f0: 700 + (n || 0) * 80, dur: 0.08, vol: 0.08 }); };
   X.hit = () => { if (gate('hit', 30)) tone({ type: 'square', f0: 380, f1: 200, dur: 0.04, vol: 0.06 }); };
   X.boom = (size) => {
     size = size || 1;

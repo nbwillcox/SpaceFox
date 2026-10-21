@@ -14,7 +14,7 @@
 
   const KEY = 'spacefox.settings.v1';
   const DEFAULT_KEYS = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', fire: 'Space', rollL: 'KeyQ', rollR: 'KeyE', bomb: 'KeyB', boost: 'ShiftLeft', brake: 'ControlLeft', pause: 'KeyP' };
-  const defaults = { master: 0.8, music: 0.6, sfx: 0.9, bloom: true, shake: true, reduced: false, comms: 'full' };
+  const defaults = { master: 0.8, music: 0.6, sfx: 0.9, bloom: true, shake: true, reduced: false, comms: 'full', autofire: false };
 
   const S = Object.assign({}, defaults);
   S.keys = Object.assign({}, DEFAULT_KEYS);
@@ -32,6 +32,7 @@
     } catch (e) { /* ignore */ }
   };
   if (!hadSaved && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) S.reduced = true;
+  if (!hadSaved && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) S.autofire = true;     /* on a phone, holding FIRE rapid-fires by default (charge lock-on is one tick away in Settings) */
   S.DEFAULT_KEYS = DEFAULT_KEYS;
   G.C = C;
   G.settings = S;
