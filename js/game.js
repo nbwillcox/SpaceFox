@@ -75,6 +75,7 @@
     Game.stats = { kills: 0, shotsFired: 0, hitsTaken: 0, crashes: 0 };
     startStage(id);
   };
+  const styleOf = (t) => ({ canyon: 'canyon', water: 'water', foundry: 'foundry', space: 'space', tunnel: 'tunnel', warp: 'warp', arena: 'arena', fortress: 'final' }[t] || 'canyon');
   function startStage(id) {
     Game.stageId = id; Game.stage = G.stages[id] || G.stages.s1; Game.stageNo = Game.stage.n;
     const up = Game.run.up;
@@ -82,7 +83,7 @@
     Game.bombCap = CP.bombCap(Game.run); Game.bombs = Math.min(Game.bombCap, Math.max(Game.run.bombs, 3));
     Game.rollCd = [0.15, 0.08, 0.02][up.roll]; Game.rollLen = 0.5 + 0.07 * up.roll;
     Game.boostDrain = 34 * (1 - 0.18 * up.boost); Game.boostRegen = 12 * (1 + 0.35 * up.boost); Game.magnet = up.magnet;
-    Game.ringChain = 0; Game.rings = 0;
+    Game.ringChain = 0; Game.rings = 0; Game.rescues = 0;
     Game.stageStartScore = Game.score; Game.spawned = 0; Game.mkills = 0; Game.stars = 0; Game.result = null;
     Game.stats = { kills: 0, shotsFired: 0, hitsTaken: 0, crashes: 0 };
     Game.dist = (G.debug && G.debug.at) || 0; Game.evIdx = 0; Game.t = 0;
@@ -97,7 +98,7 @@
     Game.ship = { x: 0, y: 0, vx: 0, vy: 0, bank: 0, rollT: 0, rollDir: 0, rollCd: 0, inv: 1.5, fire: 0, dead: false, boosting: false, braking: false, over: 0, alpha: 1, flicker: 0, face: 0, holdT: 0, charging: false, chargeT: 0, lockT: 0, locks: [], bombCd: 0 };
     Game.phase = 'intro'; Game.phaseT = 0;
     Game.msg = Game.demo ? null : { title: 'STAGE ' + Game.stage.n, sub: Game.stage.name, t: 0, dur: 2.6 };
-    if (!Game.demo) { snd('ready'); A.music('play', Game.stage.key); }
+    if (!Game.demo) { snd('ready'); A.music('play', Game.stage.key, styleOf(Game.stage.theme)); }
   }
 
   /* ---------- spawning ---------- */
@@ -143,6 +144,7 @@
         break;
       }
       case 'pickup': Game.ents.push({ t: 'pickup', kind: ev.kind, x: ev.x, y: ev.y, z, age: 0 }); break;
+      case 'rescue': spawnRescue(ev, z); break;
       case 'ring': Game.ents.push({ t: 'ring', x: ev.x, y: ev.y, z, r: ev.r || 170, age: 0, state: 0 }); break;
       case 'rock': addEnemy('rock', ev.x, ev.y, z, { vx: U.rand(-45, 45), vy: U.rand(-30, 30) }); break;
       case 'boulder': addEnemy('boulder', ev.x, ev.y, z, { vx: U.rand(-20, 20), vy: 0 }); break;
@@ -153,6 +155,41 @@
         break;
       }
     }
+  }
+
+  /* ---------- wingmate rescue: Juno or Bram flies ahead with Gloom fighters on the tail; shoot the chasers before the shield runs out ---------- */
+  function spawnRescue(ev, z) {
+    const who = ev.who || 'juno', n = ev.n || 3;
+    const w = { t: 'wing', who, x: ev.x || 0, y: ev.y || 40, ox: ev.x || 0, oy: ev.y || 40, z: Math.max(z, 2800), hp: 100, age: 0, state: 'enter', ph: Math.random() * 6, pur: [], dead: false };
+    Game.ents.push(w);
+    for (let i = 0; i < n; i++) {
+      const k = i - (n - 1) / 2;
+      w.pur.push(addEnemy('fighter', w.x + k * 120, w.y + (i % 2 ? 55 : -35), w.z - 300 - i * 110, { chase: w, amp: 0, vzo: -420, offx: k * 120, offy: i % 2 ? 55 : -35, offz: -270 - i * 100 }));
+    }
+    snd('warning');
+    say(who, 'worry', who === 'juno' ? 'Captain! Gloom fighters on my tail - get them off me!' : 'Bandits on my six, Captain. A little help would be welcome.', { pri: 2 });
+  }
+  function updateWing(w, dt) {
+    w.age += dt;
+    w.x = w.ox + Math.sin(w.age * 0.9 + w.ph) * 240; w.y = w.oy + Math.sin(w.age * 1.3) * 55;
+    const alive = w.pur.filter((p) => !p.dead && Game.ents.indexOf(p) >= 0);
+    w.alive = alive.length;
+    if (w.state === 'enter') { w.z += (1500 - w.z) * Math.min(1, 1.2 * dt); if (Math.abs(w.z - 1500) < 80) w.state = 'chased'; }
+    else if (w.state === 'chased') {
+      w.z += (1500 - w.z) * 0.6 * dt;
+      w.hp -= alive.length * 3.6 * dt * Game.diff.shotDmg;
+      if (!alive.length) {
+        w.state = 'leave'; Game.rescues++; addScore(1000);
+        snd('rescue'); FX.text('WINGMATE SAVED +1000', 480, 170, '#7dff9a');
+        say(w.who, 'cheer', w.who === 'juno' ? 'Thanks, Captain! Drinks are on me.' : 'Debt noted. I owe you one.', { pri: 2 });
+        Game.ents.push({ t: 'pickup', kind: 'repair', x: w.x * 0.5, y: 40, z: 1700, age: 0 });
+      } else if (w.hp <= 0) {
+        w.state = 'lost'; w.lostT = 0; w.hp = 0; snd('wingLost'); FX.explosion(w.x, w.y, w.z, 1.8);
+        say('moss', 'worry', 'We lost ' + (w.who === 'juno' ? 'Juno' : 'Bram') + '... the chasers are coming for you now!', { pri: 2 });
+      }
+    } else if (w.state === 'leave') { w.z += 1500 * dt; w.y += 90 * dt; if (w.z > C.ZFAR) return true; }
+    else if (w.state === 'lost') { w.lostT += dt; w.y -= 120 * dt; w.z -= Game.scroll * dt; if (w.lostT > 1.6) return true; }
+    return false;
   }
 
   /* ---------- damage ---------- */
@@ -359,7 +396,7 @@
     snd('stageClear'); A.engine(0, false);
     Game.msg = Game.demo ? null : { title: 'STAGE CLEAR', sub: Game.stage.name, t: 0, dur: 4 };
     addScore(2000 + Math.round(Game.shield) * 10);
-    const res = { stageId: Game.stageId, stageScore: Game.score - Game.stageStartScore, score: Game.score, kills: Game.mkills, spawned: Game.spawned, stars: Game.stars, hitsTaken: Game.stats.hitsTaken, shieldLeft: Math.round(Game.shield), retries: Game.retries, bombs: Game.bombs };
+    const res = { rescues: Game.rescues || 0, stageId: Game.stageId, stageScore: Game.score - Game.stageStartScore, score: Game.score, kills: Game.mkills, spawned: Game.spawned, stars: Game.stars, hitsTaken: Game.stats.hitsTaken, shieldLeft: Math.round(Game.shield), retries: Game.retries, bombs: Game.bombs };
     res.medal = CP.rate(res); res.credits = CP.creditsFor(res, Game.run);
     Game.result = res;
   }
@@ -402,13 +439,14 @@
         }
         continue;
       }
+      if (e.t === 'wing') { if (updateWing(e, dt)) { Game.ents.splice(i, 1); } continue; }
       if (e.t === 'ring') {
         e.z -= sc * dt;
         if (e.state === 0 && e.z < C.SHIP_Z + 30) {
           const dx = e.x - s.x, dy = e.y - s.y;
           if (!s.dead && dx * dx + dy * dy < e.r * e.r) {
             e.state = 1; Game.ringChain = (Game.ringChain || 0) + 1; addScore(200 + 100 * Math.min(Game.ringChain, 8)); Game.rings = (Game.rings || 0) + 1;
-            snd('star'); FX.burst(e.x, e.y, e.z, 14, 280, 'rgba(255,215,90,1)'); FX.text('RING x' + Game.ringChain, 480, 170, '#ffd24a');
+            snd('ring', Game.ringChain); FX.burst(e.x, e.y, e.z, 14, 280, 'rgba(255,215,90,1)'); FX.text('RING x' + Game.ringChain, 480, 170, '#ffd24a');
             if (Game.ringChain % 5 === 0) { Game.shield = Math.min(Game.maxShield, Game.shield + 12); FX.text('SHIELD +12', 480, 196, '#7dff9a'); }
           } else { e.state = 2; Game.ringChain = 0; }
         }
@@ -500,7 +538,7 @@
     const def = bossDef();
     Game.msg = { title: 'WARNING', sub: def.name + ' APPROACHING', t: 0, dur: 3 };
     snd('warning'); setTimeout(() => snd('warning'), 700);
-    A.music('boss', Game.stage.key);
+    A.music('boss', Game.stage.key, styleOf(Game.stage.theme)); snd('bossIn');
     const lines = Game.stage.bossWarn || [
       { who: 'moss', expr: 'gasp', text: 'Captain, huge signature ahead! That is the ' + def.name + ' - a walking fortress!', pri: 2 },
       { who: 'moss', expr: 'worry', text: 'Its armor shrugs off plain lasers. Lock on, or roll and send its mortars home!', pri: 1 }];
@@ -740,6 +778,14 @@
         break;
       }
       case 'fighter': {
+        if (e.chase) {
+          if (e.chase.state === 'chased' || e.chase.state === 'enter') {                 /* stuck to the wingmate's tail */
+            const w = e.chase, k = Math.min(1, 3 * dt);
+            e.x += (w.x + e.offx - e.x) * k; e.y += (w.y + e.offy - e.y) * k; e.z += (w.z + e.offz - e.z) * k;
+            break;
+          }
+          e.chase = null; e.ox = e.x; e.oy = e.y; e.amp = 120; e.ph = Math.random() * 6;   /* free: attack the player like any fighter */
+        }
         e.z -= (sc - e.vzo) * dt;                                   /* vzo is negative: own speed toward the camera */
         e.x = e.ox + Math.sin(e.age * 2.2 + e.ph) * e.amp;
         e.y = e.oy + Math.sin(e.age * 1.7 + e.ph * 1.3) * 34;

@@ -13,19 +13,23 @@
   <title>SpaceFox</title>
   <meta name="description" content="SpaceFox - a free retro-style rail shooter: pilot the Firebrand through canyons and fleets, barrel-roll to deflect fire, lock on, boost and take down the Regent.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305071a'/%3E%3Cpath d='M16 4l5 9 7-4-3 14H7L4 9l7 4z' fill='%23ff7a2e'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%2337e6ff'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css?v=21">
-  <link rel="stylesheet" href="css/mobile.css?v=21">
+  <link rel="stylesheet" href="css/style.css?v=27">
+  <link rel="stylesheet" href="css/mobile.css?v=27">
 </head>
 <body>
   <canvas id="game" aria-label="SpaceFox game screen"></canvas>
 
+  <div id="loading">LOADING&hellip;</div>
+
   <div id="ui">
     <section id="title" class="screen">
+      <img class="heroart" src="assets/hero.webp" alt="" aria-hidden="true">
       <h1 class="logo"><span class="l1">SPACE</span><span class="l2">FOX</span></h1>
       <p class="tag">Barrel-roll through the Hearth Reach.</p>
       <div class="menu">
         <button id="btnStart" class="primary">START CAMPAIGN</button>
         <button id="btnStageSel">STAGE SELECT</button>
+        <button id="btnHow">HOW TO PLAY</button>
         <button id="btnScores">HIGH SCORES</button>
         <button id="btnSettings">SETTINGS</button>
       </div>
@@ -37,6 +41,7 @@
       <h2>PAUSED</h2>
       <div class="menu">
         <button id="btnResume" class="primary">RESUME</button>
+        <button id="btnRestart">RESTART STAGE</button>
         <button id="btnPauseSettings">SETTINGS</button>
         <button id="btnQuit">QUIT TO TITLE</button>
       </div>
@@ -82,6 +87,31 @@
         <button id="btnScoresPlay" class="primary">PLAY AGAIN</button>
         <button id="btnScoresBack">TITLE</button>
       </div>
+    </section>
+
+    <section id="howto" class="screen hidden">
+      <h2>HOW TO PLAY</h2>
+      <div class="howgrid">
+        <div class="panel how">
+          <h3>CONTROLS</h3>
+          <p><b>Steer</b> W A S D / arrows &middot; left stick</p>
+          <p><b>Fire</b> Space &middot; A. <i>Tap</i> to shoot, <i>hold</i> to charge a lock-on</p>
+          <p><b>Barrel roll</b> Q / E, or double-tap left / right &middot; LB / RB</p>
+          <p><b>Boost / brake</b> Shift / Ctrl &middot; RT / LT</p>
+          <p><b>Bomb</b> B &middot; B button &nbsp; <b>Pause</b> P / Esc &middot; Start</p>
+          <p class="sm">On a phone: a floating stick on the left and buttons on the right. Everything can be rebound in Settings.</p>
+        </div>
+        <div class="panel how">
+          <h3>TIPS</h3>
+          <p><b>Lock-on:</b> hold fire, sweep the reticle over targets, release for a homing volley. Locking the same boss several times multiplies the hit.</p>
+          <p><b>Deflect:</b> a barrel roll throws enemy shots back at them.</p>
+          <p><b>Wingmates:</b> shoot the fighters off Juno's or Bram's tail before their shield runs out.</p>
+          <p><b>Rings:</b> in the warp lane, chain gold rings for points and shield.</p>
+          <p><b>All-range arenas:</b> no rails: turn, pitch, and watch the radar. Bombs clear the screen.</p>
+          <p><b>Medals:</b> destroy most of the enemies for gold. Gold opens the hard route.</p>
+        </div>
+      </div>
+      <div class="menu"><button id="btnHowBack" class="primary">BACK</button></div>
     </section>
 
     <section id="diff" class="screen hidden">
@@ -153,26 +183,26 @@
 
   <noscript><p style="color:#fff;padding:2rem">SpaceFox needs JavaScript enabled.</p></noscript>
 
-  <script src="js/util.js?v=21"></script>
-  <script src="js/config.js?v=21"></script>
-  <script src="assets/atlas.js?v=21"></script>
-  <script src="js/audio.js?v=21"></script>
-  <script src="js/gfx.js?v=21"></script>
-  <script src="js/fx.js?v=21"></script>
-  <script src="js/input.js?v=21"></script>
-  <script src="js/scores.js?v=21"></script>
-  <script src="js/sprites.js?v=21"></script>
-  <script src="js/comms.js?v=21"></script>
-  <script src="js/stages.js?v=21"></script>
-  <script src="js/campaign.js?v=21"></script>
-  <script src="js/game.js?v=21"></script>
-  <script src="js/arena.js?v=21"></script>
-  <script src="js/render.js?v=21"></script>
-  <script src="js/hud.js?v=21"></script>
-  <script src="js/ui.js?v=21"></script>
-  <script src="js/flow.js?v=21"></script>
-  <script src="js/touchcfg.js?v=21"></script>
-  <script src="js/mobile.js?v=21"></script>
-  <script src="js/main.js?v=21"></script>
+  <script src="js/util.js?v=27"></script>
+  <script src="js/config.js?v=27"></script>
+  <script src="assets/atlas.js?v=27"></script>
+  <script src="js/audio.js?v=27"></script>
+  <script src="js/gfx.js?v=27"></script>
+  <script src="js/fx.js?v=27"></script>
+  <script src="js/input.js?v=27"></script>
+  <script src="js/scores.js?v=27"></script>
+  <script src="js/sprites.js?v=27"></script>
+  <script src="js/comms.js?v=27"></script>
+  <script src="js/stages.js?v=27"></script>
+  <script src="js/campaign.js?v=27"></script>
+  <script src="js/game.js?v=27"></script>
+  <script src="js/arena.js?v=27"></script>
+  <script src="js/render.js?v=27"></script>
+  <script src="js/hud.js?v=27"></script>
+  <script src="js/ui.js?v=27"></script>
+  <script src="js/flow.js?v=27"></script>
+  <script src="js/touchcfg.js?v=27"></script>
+  <script src="js/mobile.js?v=27"></script>
+  <script src="js/main.js?v=27"></script>
 </body>
 </html>

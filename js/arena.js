@@ -16,7 +16,7 @@
   B.bulwark.core = { phase: 2, color: 'rgba(255,150,50,1)', dy: 0.02 };
   B.talon = { name: 'SCARLET TALON', atlas: 'enemy', frame: 0, w: 360, rx: 150, ry: 130, hp: 100, armor: false, arena: true, speed: 1500, score: 12000, glow: 'rgba(255,40,60,1)',
     p2: 'It lit the afterburners! It is dropping mines, Captain - watch your six!' };
-  B.queen = { name: 'HOLLOW QUEEN', atlas: 'none', draw: 'queen', frame: 0, w: 1500, rx: 720, ry: 250, hp: 180, armor: false, arena: true, shielded: true, score: 15000,
+  B.queen = { name: 'HOLLOW QUEEN', atlas: 'none', draw: 'queen', frame: 0, w: 1500, rx: 720, ry: 250, hp: 150, armor: false, arena: true, shielded: true, score: 15000,
     p2: 'The shield generators are down! Hit the carrier hull with everything!' };
   B.gatewyrm = { name: 'GATEWYRM', atlas: 'boss', frame: 1, w: 1000, rx: 390, ry: 250, hp: 200, armor: false, y: 70, z: 1150, sway: 280, minion: 'fighter', score: 12000,
     seq1: ['fan', 'orbs', 'spawn', 'ring'], seq2: ['swipe', 'inferno', 'orbs', 'ring', 'spawn'],

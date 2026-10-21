@@ -97,7 +97,7 @@
   };
   CP.creditsFor = function (res, run) {
     const d = CP.DIFF[run.diff], st = CP.STAGES[res.stageId];
-    const base = Math.floor(res.stageScore / 60) + res.stars * 10 + { gold: 300, silver: 150, bronze: 50 }[res.medal];
+    const base = Math.floor(res.stageScore / 60) + res.stars * 10 + (res.rescues || 0) * 150 + { gold: 300, silver: 150, bronze: 50 }[res.medal];
     return Math.round(base * d.credits * (st && st.hard ? 1.25 : 1));
   };
 

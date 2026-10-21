@@ -117,6 +117,13 @@
       if (b.shield) txt(ctx, 'SHIELDED: DESTROY THE TURRETS (' + (b.gens || 0) + ' LEFT)', W / 2, by + 26, 10, '#7de8ff', 'center', 800);
       else if (b.def.armor && b.phase === 1 && !b.dying) txt(ctx, 'ARMORED: USE LOCK-ON OR DEFLECT', W / 2, by + 26, 10, '#9fb7d8', 'center', 800);
     }
+    for (const w of g.ents) {
+      if (w.t !== 'wing' || (w.state !== 'chased' && w.state !== 'enter')) continue;
+      txt(ctx, w.who.toUpperCase() + ' UNDER ATTACK', 20, 92, 10, '#ff9a8a', 'left', 800);
+      ctx.fillStyle = 'rgba(0,10,30,0.7)'; ctx.fillRect(18, 96, 154, 9);
+      ctx.fillStyle = w.hp > 35 ? '#7dff9a' : '#ff6a5a'; ctx.fillRect(20, 98, 150 * U.clamp(w.hp / 100, 0, 1), 5);
+      break;
+    }
     if (g.arena) drawRadar(ctx, g);
     if (g.arena && G.arena.warn && g.phase === 'play') txt(ctx, 'RETURN TO THE ARENA', W / 2, 300, 24, '#ff8a6a', 'center', 900, 'rgba(255,100,60,0.9)');
     G.comms.draw(ctx, 20, 130);

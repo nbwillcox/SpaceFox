@@ -149,3 +149,14 @@ Title (Firebrand + fox portrait), difficulty, **route map** (shows the fork, med
 1. Do the names in section 1 work, or do you want any changed (hero, frog, wingmates, villain, ship)?
 2. Landscape only on phones, or also support portrait?
 3. Anything in this doc you want cut or added before I start Milestone 1?
+
+## 15. Implementation status (2026-10-21)
+
+All six milestones are built. Differences from this plan, for the record:
+
+- The four rail-stage bosses after Bulwark (Rockjaw, Tidecaller, Foundry Warden, Prism Sentinel) reuse the six enemy sprites at giant scale; the Gatewyrm and Crown Core use the serpent and claw-hub concept art; the Hollow Queen is drawn in code.
+- Stage 4 and 6 are all-range arenas simulated in the ship's own frame (the world rotates around the ship), with a radar and a gentle laser aim assist.
+- Wingmate rescues exist on the rail stages only. Juno and Bram portraits are drawn in code.
+- Hidden medal objectives were dropped: medals come from the share of enemies destroyed. Saved wingmates add credits.
+- Extras beyond the plan: gamepad support, a how-to-play page, restart stage from the pause menu, invert pitch, rapid-fire setting, eight music styles.
+- Balance is tuned only against an autopilot; it needs human play.

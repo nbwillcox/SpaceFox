@@ -16,12 +16,17 @@ The campaign is complete (milestone 5): seven stages, a route map with a hard br
 | Boost / brake | `Shift` / `Ctrl` |
 | Bomb | `B` |
 | Pause | `P` or `Esc` |
+| Gamepad | Left stick / d-pad steer, `A` fire, `B` bomb, `X`/`LB` roll left, `Y`/`RB` roll right, `LT` brake, `RT` boost, Start pause |
+
+**Wingmates:** Juno and Bram sometimes fly into the rail stages with Gloom fighters on their tail. Shoot the chasers off before their shield runs out for a rescue bonus (and credits).
 
 Pickups: laser upgrades (twin, then hyper), bombs, repair, overshield, boost refill, extra retries and stars. Settings has *Rapid fire while FIRE is held* (default on for phones) if you prefer holding to charging.
 
 Stage 1 ends with the **Bulwark**, an armored walking fortress: plain lasers barely scratch it (lock-on volleys, deflected mortars and bombs do full damage), it telegraphs claw swipes with a red lane on the water, and once half its armor is gone the furnace core opens. Moss and Captain Vale chatter over the radio with typed text and a babble voice (Settings > Comms chatter: full / warnings only / off).
 
 ## Campaign
+
+The title screen has a *How to play* page, and every stage has its own music style (canyon, water, foundry, space, tunnel, warp, arena, final).
 
 Pick a difficulty (Easy / Normal / Hard) and fly the **route map**: Ember Canyon, then a fork between *Drift Belt* (asteroids, easy route) and *Glasswater Reach* (hard route), then *Foundry Spine* (lava) or *Ghost Station* (tunnels). Each stage ends with a boss: Bulwark, Rockjaw, Tidecaller, Foundry Warden and Prism Sentinel. Then the all-range *Nebula Arena* (rival ace Scarlet Talon), the warp-lane *Gatewyrm Run* (fly through gold rings, then fight the serpent), the all-range *Regent's Fleet* (knock out the Hollow Queen's shield turrets, then her hull) and the final *Crown Core*, a three-phase fortress boss.
 

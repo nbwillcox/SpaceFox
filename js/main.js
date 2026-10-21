@@ -138,6 +138,10 @@
     UI.hideAll();
     A.sfx.start();
   };
+  M.restartStage = function () {
+    if (!Game.run || Game.demo) return;
+    M.playStage(Game.run, Game.stageId);
+  };
   M.startGame = function () {
     A.resume();
     I.clear();
@@ -181,6 +185,7 @@
     let dt = (now - last) / 1000;
     last = now;
     if (!(dt > 0)) dt = 1 / 60;
+    if (M.mode === 'play' && !Game.bot) I.pollPad();
     if (dt > 0.1) dt = 0.1;
     adapt(dt);
     if (dt > 0.05) dt = 0.05;
@@ -203,6 +208,7 @@
   I.bind(canvas);
 
   function boot() {
+    const ld = document.getElementById('loading'); if (ld) ld.remove();
     GFX.init();
     resize();
     Game.reset(true, 1);

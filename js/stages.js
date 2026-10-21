@@ -60,6 +60,7 @@
     ev.push({ d: 61000, e: 'pickup', kind: 'bomb', x: 100, y: 40 });
     ev.push({ d: 75000, e: 'pickup', kind: 'life', x: 0, y: 60 });
     ev.push({ d: 90000, e: 'pickup', kind: 'bomb', x: -60, y: 30 });
+    ev.push({ d: 56000, e: 'rescue', who: 'juno', n: 3, x: 0, y: 50 });
     ev.push({ d: 30000, e: 'pickup', kind: 'repair', x: -120, y: 40 });
     ev.push({ d: 52000, e: 'pickup', kind: 'shield', x: 140, y: 30 });
     ev.push({ d: 70000, e: 'pickup', kind: 'repair', x: 0, y: 50 });
@@ -99,6 +100,7 @@
       d += P[pick(w)](d, Math.min(2, tier + (cfg.tierBoost || 0))) * (cfg.gap || 1) + 400;
     }
     for (const p of cfg.pickups) ev.push(Object.assign({ e: 'pickup' }, p));
+    for (const p of cfg.rescues || []) ev.push(Object.assign({ e: 'rescue', n: 3, x: 0, y: 50 }, p));
     ev.sort((a, b) => a.d - b.d);
     return ev;
   }
@@ -126,7 +128,7 @@
     },
     s5: {
       id: 's5', n: 5, name: 'GATEWYRM RUN', theme: 'warp', length: 100000, bossAt: 92000, boss: 'gatewyrm', key: 8,
-      events: compose({ seed: 5555, bossAt: 92000, gap: 0.95, opening: ['stars', 'rings', 'fighters'],
+      events: compose({ rescues: [{ d: 52000, who: 'bram' }], seed: 5555, bossAt: 92000, gap: 0.95, opening: ['stars', 'rings', 'fighters'],
         deck: [['rings', 'fighters', 'twin', 'rings', 'mines', 'crystal'], ['rings', 'fighters', 'twin', 'crystal', 'rings', 'gunship', 'mines'], ['rings', 'rings', 'fighters', 'twin', 'crystal', 'gunship', 'mines']],
         pickups: [{ d: 8000, kind: 'laser', x: 0, y: 40 }, { d: 22000, kind: 'bomb', x: 90, y: 30 }, { d: 34000, kind: 'repair', x: -80, y: 40 }, { d: 48000, kind: 'laser', x: 50, y: 60 }, { d: 60000, kind: 'bomb', x: -80, y: 30 }, { d: 72000, kind: 'repair', x: 70, y: 40 }, { d: 82000, kind: 'shield', x: 0, y: 30 }] }),
       comms: [
@@ -156,7 +158,7 @@
     },
     s7: {
       id: 's7', n: 7, name: 'CROWN CORE', theme: 'fortress', length: 110000, bossAt: 100000, boss: 'crown', key: 10,
-      events: compose({ seed: 7070, bossAt: 100000, gap: 0.9, tierBoost: 1, opening: ['stars', 'gate', 'fighters'],
+      events: compose({ rescues: [{ d: 50000, who: 'juno', n: 4 }, { d: 78000, who: 'bram', n: 4 }], seed: 7070, bossAt: 100000, gap: 0.9, tierBoost: 1, opening: ['stars', 'gate', 'fighters'],
         deck: [['gate', 'fighters', 'twin', 'crystal', 'mines', 'gunship', 'gate'], ['gate', 'fighters', 'twin', 'crystal', 'mines', 'gunship', 'gate', 'gate'], ['gate', 'gate', 'twin', 'crystal', 'gunship', 'gunship', 'mines', 'fighters']],
         pickups: [{ d: 8000, kind: 'laser', x: 0, y: 40 }, { d: 20000, kind: 'bomb', x: 90, y: 30 }, { d: 32000, kind: 'repair', x: -80, y: 40 }, { d: 46000, kind: 'laser', x: 50, y: 60 }, { d: 58000, kind: 'bomb', x: -80, y: 30 }, { d: 68000, kind: 'repair', x: 70, y: 40 }, { d: 78000, kind: 'life', x: 0, y: 50 }, { d: 88000, kind: 'shield', x: 0, y: 30 }, { d: 94000, kind: 'bomb', x: 60, y: 30 }] }),
       comms: [
@@ -170,7 +172,7 @@
     },
     s2a: {
       id: 's2a', n: 2, name: 'DRIFT BELT', theme: 'space', length: 90000, bossAt: 82000, boss: 'rockjaw', key: 2,
-      events: compose({ seed: 4242, bossAt: 82000, gap: 1.05, opening: ['stars', 'fighters', 'rocks'],
+      events: compose({ rescues: [{ d: 44000, who: 'bram' }], seed: 4242, bossAt: 82000, gap: 1.05, opening: ['stars', 'fighters', 'rocks'],
         deck: [['fighters', 'rocks', 'rocks', 'boulders', 'twin', 'mines', 'stars'], ['fighters', 'rocks', 'boulders', 'twin', 'crystal', 'mines', 'rocks', 'gunship'], ['fighters', 'rocks', 'boulders', 'boulders', 'twin', 'crystal', 'gunship', 'mines']],
         pickups: [{ d: 8000, kind: 'laser', x: 0, y: 40 }, { d: 21000, kind: 'bomb', x: -100, y: 30 }, { d: 30000, kind: 'repair', x: 80, y: 40 }, { d: 44000, kind: 'laser', x: 60, y: 60 }, { d: 56000, kind: 'bomb', x: 100, y: 30 }, { d: 64000, kind: 'repair', x: -90, y: 40 }, { d: 72000, kind: 'shield', x: 60, y: 30 }] }),
       comms: [
@@ -184,7 +186,7 @@
     },
     s2b: {
       id: 's2b', n: 2, name: 'GLASSWATER REACH', theme: 'water', length: 96000, bossAt: 88000, boss: 'tidecaller', key: 5, hard: true,
-      events: compose({ seed: 7777, bossAt: 88000, gap: 0.92, tierBoost: 0, opening: ['stars', 'fighters', 'arch'],
+      events: compose({ rescues: [{ d: 40000, who: 'juno' }, { d: 70000, who: 'bram', n: 4 }], seed: 7777, bossAt: 88000, gap: 0.92, tierBoost: 0, opening: ['stars', 'fighters', 'arch'],
         deck: [['fighters', 'arch', 'pillars', 'tanks', 'twin', 'bar', 'mines'], ['fighters', 'arch', 'pillars', 'tanks', 'twin', 'crystal', 'bar', 'gunship'], ['fighters', 'arch', 'tanks', 'twin', 'crystal', 'gunship', 'bar', 'pillars', 'mines']],
         pickups: [{ d: 7000, kind: 'laser', x: 0, y: 40 }, { d: 20000, kind: 'bomb', x: 100, y: 30 }, { d: 32000, kind: 'repair', x: -80, y: 40 }, { d: 46000, kind: 'laser', x: -60, y: 50 }, { d: 58000, kind: 'bomb', x: -90, y: 30 }, { d: 68000, kind: 'repair', x: 80, y: 40 }, { d: 78000, kind: 'shield', x: 0, y: 30 }] }),
       comms: [
@@ -198,7 +200,7 @@
     },
     s3a: {
       id: 's3a', n: 3, name: 'FOUNDRY SPINE', theme: 'foundry', length: 94000, bossAt: 86000, boss: 'warden', key: 3,
-      events: compose({ seed: 9091, bossAt: 86000, gap: 1, opening: ['stars', 'pillars', 'fighters'],
+      events: compose({ rescues: [{ d: 46000, who: 'bram' }], seed: 9091, bossAt: 86000, gap: 1, opening: ['stars', 'pillars', 'fighters'],
         deck: [['pillars', 'tanks', 'bar', 'fighters', 'mines', 'twin', 'stars'], ['pillars', 'tanks', 'bar', 'twin', 'crystal', 'mines', 'fighters'], ['pillars', 'tanks', 'bar', 'twin', 'crystal', 'gunship', 'mines', 'tanks']],
         pickups: [{ d: 8000, kind: 'laser', x: 0, y: 40 }, { d: 22000, kind: 'bomb', x: 90, y: 30 }, { d: 34000, kind: 'repair', x: -70, y: 40 }, { d: 48000, kind: 'laser', x: 50, y: 60 }, { d: 60000, kind: 'bomb', x: -80, y: 30 }, { d: 70000, kind: 'repair', x: 70, y: 40 }, { d: 78000, kind: 'life', x: 0, y: 50 }] }),
       comms: [
@@ -211,7 +213,7 @@
     },
     s3b: {
       id: 's3b', n: 3, name: 'GHOST STATION', theme: 'tunnel', length: 98000, bossAt: 90000, boss: 'prism', key: 7, hard: true,
-      events: compose({ seed: 1313, bossAt: 90000, gap: 0.95, opening: ['stars', 'gate', 'fighters'],
+      events: compose({ rescues: [{ d: 44000, who: 'juno' }], seed: 1313, bossAt: 90000, gap: 0.95, opening: ['stars', 'gate', 'fighters'],
         deck: [['gate', 'fighters', 'twin', 'mines', 'gate', 'crystal'], ['gate', 'fighters', 'twin', 'mines', 'crystal', 'gate', 'gunship'], ['gate', 'gate', 'twin', 'mines', 'crystal', 'gunship', 'fighters']],
         pickups: [{ d: 7000, kind: 'laser', x: 0, y: 40 }, { d: 20000, kind: 'bomb', x: 80, y: 30 }, { d: 34000, kind: 'repair', x: -80, y: 40 }, { d: 46000, kind: 'laser', x: 40, y: 50 }, { d: 60000, kind: 'bomb', x: -90, y: 30 }, { d: 72000, kind: 'repair', x: 80, y: 40 }, { d: 82000, kind: 'shield', x: 0, y: 30 }] }),
       comms: [

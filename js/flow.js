@@ -121,6 +121,7 @@
     $('resRows').innerHTML =
       '<li><span>Enemies destroyed</span><b>' + res.kills + ' / ' + res.spawned + ' (' + Math.round(res.pct * 100) + '%)</b></li>' +
       '<li><span>Stars</span><b>' + res.stars + '</b></li>' +
+      (res.rescues ? '<li><span>Wingmates saved</span><b>' + res.rescues + '</b></li>' : '') +
       '<li><span>Hits taken</span><b>' + res.hitsTaken + '</b></li>' +
       '<li><span>Stage score</span><b>' + U.fmt(res.stageScore) + (res.stageScore > prevBest ? ' &nbsp;NEW BEST' : '') + '</b></li>' +
       '<li class="cr"><span>Credits earned</span><b>+' + res.credits + '</b></li>';

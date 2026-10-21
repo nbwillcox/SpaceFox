@@ -8,7 +8,7 @@
 
   SP.load = function (done) {
     let n = 0, total = 0;
-    const fin = () => { if (++n >= total) { SP.ready = true; if (done) done(); } };
+    const fin = () => { if (++n >= total) { SP.makeTints(); SP.ready = true; if (done) done(); } };
     for (const k in SP.data) {
       total++;
       const im = new Image();
@@ -19,12 +19,26 @@
     total++;
     SP.bg = new Image(); SP.bg.onload = fin; SP.bg.onerror = fin; SP.bg.src = 'assets/bg_canyon.webp?v=' + (G.V || 1);
   };
+  /* tinted copies of the ship sheet for the wingmates */
+  SP.makeTints = function () {
+    const base = SP.img.ship;
+    if (!base || !base.naturalWidth) return;
+    const mk = (name, col) => {
+      const c = document.createElement('canvas'); c.width = base.naturalWidth; c.height = base.naturalHeight;
+      const x = c.getContext('2d'); x.drawImage(base, 0, 0);
+      const sil = document.createElement('canvas'); sil.width = c.width; sil.height = c.height;
+      const sx = sil.getContext('2d'); sx.fillStyle = col; sx.fillRect(0, 0, c.width, c.height); sx.globalCompositeOperation = 'destination-in'; sx.drawImage(base, 0, 0);
+      x.globalCompositeOperation = 'color'; x.globalAlpha = 0.7; x.drawImage(sil, 0, 0);
+      SP.data[name] = SP.data.ship; SP.img[name] = c;
+    };
+    mk('ship_juno', '#27e6a8'); mk('ship_bram', '#5a86ff');
+  };
   /* size of frame i in px */
   SP.size = (atlas, i) => { const f = SP.data[atlas].frames[i]; return { w: f[2], h: f[3] }; };
   /* draw frame i centred at (x,y) at uniform scale k; flip mirrors horizontally */
   SP.draw = function (ctx, atlas, i, x, y, k, flip, alpha, rot) {
     const d = SP.data[atlas], im = SP.img[atlas];
-    if (!d || !im || !im.complete || !im.naturalWidth) return;
+    if (!d || !im || (im.tagName !== 'CANVAS' && (!im.complete || !im.naturalWidth))) return;
     const f = d.frames[i], w = f[2] * k, h = f[3] * k;
     if (alpha !== undefined && alpha !== 1) ctx.globalAlpha = alpha;
     if (flip || rot) {

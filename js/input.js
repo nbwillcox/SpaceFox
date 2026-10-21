@@ -59,6 +59,27 @@
     canvas.addEventListener('pointerdown', () => { I._any = true; });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   };
+  /* gamepad: left stick / d-pad steer, A fire, B bomb, X or LB roll left, Y or RB roll right, LT brake, RT boost, Start pause */
+  const pad = { prev: {}, on: false };
+  function padSet(a, v, edge) {
+    if (pad.prev[a] === v) return;
+    pad.prev[a] = v;
+    I.held[a] = v;
+    if (!v) return;
+    I._any = true;
+    if (a === 'rollL') I._roll = -1; else if (a === 'rollR') I._roll = 1; else if (a === 'bomb') I._bomb = true; else if (a === 'pause') I._pause = true; else if (a === 'fire') I._launch = true;
+  }
+  I.pollPad = function () {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    let gp = null;
+    for (const p of pads) if (p && p.connected) { gp = p; break; }
+    if (!gp) { if (pad.on) { pad.on = false; for (const a in pad.prev) if (pad.prev[a]) padSet(a, false); } return; }
+    pad.on = true;
+    const b = (i) => !!(gp.buttons[i] && (gp.buttons[i].pressed || gp.buttons[i].value > 0.5)), ax = (i) => gp.axes[i] || 0, dz = 0.35;
+    padSet('left', ax(0) < -dz || b(14)); padSet('right', ax(0) > dz || b(15)); padSet('up', ax(1) < -dz || b(12)); padSet('down', ax(1) > dz || b(13));
+    padSet('fire', b(0)); padSet('bomb', b(1)); padSet('rollL', b(2) || b(4)); padSet('rollR', b(3) || b(5));
+    padSet('brake', b(6)); padSet('boost', b(7)); padSet('pause', b(9));
+  };
   I.ACTIONS = ACTIONS;
   G.input = I;
 })((window.SGS = window.SGS || {}));

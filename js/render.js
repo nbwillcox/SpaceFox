@@ -283,6 +283,7 @@
   R.scene = function (ctx, g) {
     if (!g.ship) return;
     drawLane(ctx, g);
+    drawChaseBeams(ctx, g);
     const list = [];
     for (const e of g.ents) list.push(e);
     for (const e of g.eshots) list.push({ t: 'eshot', z: e.z, e });
@@ -302,6 +303,7 @@
         case 'pickup': drawPickup(ctx, g, it); break;
         case 'enemy': drawEnemy(ctx, g, it); break;
         case 'ring': drawRing(ctx, g, it); break;
+        case 'wing': drawWing(ctx, g, it); break;
       }
     }
     G.fx.draw(ctx, g.proj);
@@ -525,6 +527,37 @@
     ctx.lineWidth = Math.max(2, 16 * q.s); ctx.beginPath(); ctx.arc(q.x, q.y, r * (rg.state === 1 ? 1.25 : 1), 0, TAU); ctx.stroke();
     ctx.lineWidth = Math.max(1, 5 * q.s); ctx.strokeStyle = 'rgba(255,250,220,0.9)'; ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, TAU); ctx.stroke();
     ctx.restore();
+  }
+  function drawWing(ctx, g, w) {
+    if (w.z < -100) return;
+    const q = g.proj(w.x, w.y, w.z), k = (170 / SP.size('ship', 0).w) * q.s;
+    const b = Math.cos(w.age * 0.9 + w.ph), F = SP.SHIP;
+    let fr = F.LEVEL; if (b > 0.5) fr = F.R1; else if (b < -0.5) fr = F.L1;
+    const lost = w.state === 'lost', fa = clamp((C.ZFAR - w.z) / 500, 0, 1) * (lost ? 0.6 : 1);
+    ctx.fillStyle = 'rgba(0,20,40,0.3)'; const sh = g.proj(w.x, C.FLOOR, w.z);
+    if (g.stage.theme !== 'space' && g.stage.theme !== 'arena' && g.stage.theme !== 'warp') { ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 60 * sh.s, 12 * sh.s, 0, 0, TAU); ctx.fill(); }
+    ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * fa;
+    for (const ex of [-0.19, 0.19]) ctx.drawImage(G.gfx.glow('rgba(110,220,255,1)'), q.x + ex * 274 * k - 70 * k, q.y + 8 * k - 70 * k, 140 * k, 140 * k);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    SP.draw(ctx, 'ship_' + w.who, fr, q.x, q.y, k, false, fa, lost ? w.lostT * 3 : 0);
+    if (w.state === 'chased' || w.state === 'enter') {
+      const bw = 70, bx = q.x - bw / 2, by = q.y - 62 * q.s - 14;
+      ctx.fillStyle = 'rgba(0,10,30,0.7)'; ctx.fillRect(bx - 1, by - 1, bw + 2, 7);
+      ctx.fillStyle = w.hp > 35 ? '#7dff9a' : '#ff6a5a'; ctx.fillRect(bx, by, bw * clamp(w.hp / 100, 0, 1), 5);
+      ctx.font = '800 11px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#eaf6ff'; ctx.fillText(w.who.toUpperCase(), q.x, by - 4);
+    }
+  }
+  /* beams from the chasers to the wingmate */
+  function drawChaseBeams(ctx, g) {
+    for (const e of g.ents) {
+      if (e.t !== 'enemy' || !e.chase || e.chase.state !== 'chased' || e.dead) continue;
+      const a = g.proj(e.x, e.y, e.z), b = g.proj(e.chase.x, e.chase.y, e.chase.z);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(255,70,170,' + (0.5 + 0.3 * Math.sin(g.t * 30)).toFixed(2) + ')'; ctx.lineWidth = Math.max(1.5, 5 * a.s);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,220,240,0.9)'; ctx.lineWidth = Math.max(1, 2 * a.s); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      ctx.restore();
+    }
   }
   function drawBossShadow(ctx, g, e) {
     const q = g.proj(e.x, C.FLOOR, e.z);

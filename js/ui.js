@@ -4,7 +4,7 @@
   const S = G.settings, A = G.audio, U = G.U;
   const $ = (id) => document.getElementById(id);
   const UI = { cur: 'title', back: 'title', lastIdx: -1 };
-  const NAMES = ['title', 'pause', 'settings', 'scores', 'gameover', 'diff', 'map', 'results', 'shop', 'cont', 'ending'];
+  const NAMES = ['title', 'pause', 'settings', 'scores', 'gameover', 'diff', 'map', 'results', 'shop', 'cont', 'ending', 'howto'];
 
   UI.show = function (name) {
     NAMES.forEach((n) => $(n).classList.toggle('hidden', n !== name));
@@ -67,6 +67,9 @@
     const on = (id, fn) => $(id).addEventListener('click', () => { A.resume(); A.sfx.select(); fn(); });
     on('btnStart', () => G.flow.begin('campaign'));
     on('btnStageSel', () => G.flow.begin('free'));
+    on('btnHow', () => { UI.show('howto'); });
+    on('btnHowBack', () => UI.show('title'));
+    on('btnRestart', () => G.main.restartStage());
     on('btnScores', () => { UI.back = 'title'; UI.lastIdx = -1; UI.show('scores'); });
     on('btnSettings', () => { UI.back = 'title'; UI.show('settings'); });
     on('btnResume', () => G.main.resume());
@@ -117,6 +120,7 @@
       if (e.key !== 'Escape') return;
       if (UI.cur === 'settings') UI.show(UI.back);
       else if (UI.cur === 'scores') G.main.toTitle();
+      else if (UI.cur === 'howto') UI.show('title');
     });
     document.addEventListener('pointerdown', () => A.resume(), { passive: true });
     document.addEventListener('keydown', () => A.resume());
