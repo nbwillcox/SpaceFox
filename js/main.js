@@ -10,7 +10,7 @@
   const bctx = [b1.getContext('2d'), b2.getContext('2d'), b3.getContext('2d')];
   const view = (G.view = { ox: 0, oy: 0, s: 1, w: 0, h: 0, dpr: 1, ps: 1, rs: 1 });
   const params = new URLSearchParams(location.search);
-  G.debug = { stage: parseInt(params.get('stage'), 10) || 0, god: params.get('god') === '1', bot: params.get('bot') === '1', lives: parseInt(params.get('lives'), 10) || 0, at: parseInt(params.get('at'), 10) || 0 };
+  G.debug = { stage: params.get('stage') || '', diff: params.get('diff') || '', unlock: params.get('unlock') === '1', god: params.get('god') === '1', bot: params.get('bot') === '1', lives: parseInt(params.get('lives'), 10) || 0, at: parseInt(params.get('at'), 10) || 0 };
   const WORLD_HUE = [265, 285, 330, 190, 150];
   const bg = { stars: [], hue: -1, pat: null, pat2: null, scroll: 0 };
   const M = { mode: 'title' };
@@ -127,6 +127,17 @@
   }
 
   /* ---------- app modes ---------- */
+  M.playStage = function (run, id) {
+    A.resume();
+    I.clear();
+    Game.reset(false, id, run);
+    Game.onOver = () => { M.mode = 'over'; G.flow.gameOver(); };
+    Game.onClear = (res) => { M.mode = 'over'; G.flow.stageClear(res); };
+    if (G.debug.bot) Game.bot = true;
+    M.mode = 'play';
+    UI.hideAll();
+    A.sfx.start();
+  };
   M.startGame = function () {
     A.resume();
     I.clear();

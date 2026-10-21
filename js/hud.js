@@ -64,7 +64,7 @@
     /* shield + boost */
     txt(ctx, 'SHIELD', 20, 20, 11, '#7de8ff', 'left', 800);
     const low = g.shield < 30;
-    bar(ctx, 20, 26, 220, 12, g.shield / C.SHIELD, low ? '#ff3a3a' : '#2fd6ff', low ? '#ff9a6a' : '#7dffb0', s.over / 50);
+    bar(ctx, 20, 26, 220, 12, g.shield / g.maxShield, low ? '#ff3a3a' : '#2fd6ff', low ? '#ff9a6a' : '#7dffb0', s.over / 50);
     txt(ctx, 'BOOST', 20, 56, 10, g.boostLock ? '#ff9a6a' : '#ffb347', 'left', 800);
     bar(ctx, 20, 60, 150, 6, g.boost / 100, '#ff7a2e', '#ffd24a');
     /* score / hits */
@@ -86,11 +86,11 @@
       const b = g.boss, bw = 420, bx = W / 2 - bw / 2, by = 84;
       txt(ctx, b.name, W / 2, by - 4, 12, '#ffb08a', 'center', 800);
       ctx.fillStyle = 'rgba(0,10,30,0.7)'; ctx.fillRect(bx - 2, by, bw + 4, 12);
-      const gr = ctx.createLinearGradient(bx, 0, bx + bw, 0); gr.addColorStop(0, b.phase === 1 ? '#a8b4c8' : '#ff5a3a'); gr.addColorStop(1, b.phase === 1 ? '#e6eefc' : '#ffb347');
+      const gr = ctx.createLinearGradient(bx, 0, bx + bw, 0); gr.addColorStop(0, b.phase === 1 && b.def.armor ? '#a8b4c8' : '#ff5a3a'); gr.addColorStop(1, b.phase === 1 && b.def.armor ? '#e6eefc' : '#ffb347');
       ctx.fillStyle = gr; ctx.fillRect(bx, by + 2, bw * U.clamp(b.hp / b.maxHp, 0, 1), 8);
       ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(bx + bw / 2 - 1, by - 1, 2, 14);
       ctx.strokeStyle = 'rgba(255,170,130,0.6)'; ctx.lineWidth = 1.2; ctx.strokeRect(bx - 2, by, bw + 4, 12);
-      if (b.phase === 1 && !b.dying) txt(ctx, 'ARMORED: USE LOCK-ON OR DEFLECT', W / 2, by + 26, 10, '#9fb7d8', 'center', 800);
+      if (b.def.armor && b.phase === 1 && !b.dying) txt(ctx, 'ARMORED: USE LOCK-ON OR DEFLECT', W / 2, by + 26, 10, '#9fb7d8', 'center', 800);
     }
     G.comms.draw(ctx, 20, 130);
     if (g.msg) {

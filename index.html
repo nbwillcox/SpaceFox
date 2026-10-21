@@ -13,8 +13,8 @@
   <title>SpaceFox</title>
   <meta name="description" content="SpaceFox - a free retro-style rail shooter: pilot the Firebrand through canyons and fleets, barrel-roll to deflect fire, lock on, boost and take down the Regent.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305071a'/%3E%3Cpath d='M16 4l5 9 7-4-3 14H7L4 9l7 4z' fill='%23ff7a2e'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%2337e6ff'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css?v=4">
-  <link rel="stylesheet" href="css/mobile.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/mobile.css?v=12">
 </head>
 <body>
   <canvas id="game" aria-label="SpaceFox game screen"></canvas>
@@ -24,7 +24,8 @@
       <h1 class="logo"><span class="l1">SPACE</span><span class="l2">FOX</span></h1>
       <p class="tag">Barrel-roll through the Hearth Reach.</p>
       <div class="menu">
-        <button id="btnStart" class="primary">START GAME</button>
+        <button id="btnStart" class="primary">START CAMPAIGN</button>
+        <button id="btnStageSel">STAGE SELECT</button>
         <button id="btnScores">HIGH SCORES</button>
         <button id="btnSettings">SETTINGS</button>
       </div>
@@ -82,6 +83,49 @@
       </div>
     </section>
 
+    <section id="diff" class="screen hidden">
+      <h2>DIFFICULTY</h2>
+      <div class="menu wide">
+        <button type="button" class="diffbtn" data-d="easy"><b>EASY</b><span>Slower enemy fire, tougher shield, 5 retries, 3 continues.</span></button>
+        <button type="button" class="diffbtn" data-d="normal"><b>NORMAL</b><span>The intended flight. 3 retries, 1 continue.</span></button>
+        <button type="button" class="diffbtn" data-d="hard"><b>HARD</b><span>Heavier hits, faster fire, tougher enemies, no continues. More credits.</span></button>
+        <button id="btnDiffBack" type="button">BACK</button>
+      </div>
+    </section>
+
+    <section id="map" class="screen hidden">
+      <h2>ROUTE MAP</h2>
+      <p id="mapInfo" class="mapinfo"></p>
+      <div id="mapBoard" class="board"><svg id="mapLines" aria-hidden="true"></svg><div id="mapCols"></div></div>
+      <div id="mapDetail" class="detail"></div>
+      <div class="menu row"><button id="btnMapLaunch" class="primary">LAUNCH</button><button id="btnMapBack">BACK</button></div>
+    </section>
+
+    <section id="results" class="screen hidden">
+      <h2 id="resTitle">STAGE CLEAR</h2>
+      <p id="resName" class="resname"></p>
+      <div id="resMedal" class="resmedal"></div>
+      <div class="bar"><i id="resPct"></i></div>
+      <ul id="resRows" class="rows"></ul>
+      <div class="menu"><button id="btnResHangar" class="primary">TO THE HANGAR</button></div>
+    </section>
+
+    <section id="shop" class="screen hidden">
+      <h2>HANGAR</h2>
+      <p class="credits">CREDITS <b id="shCredits">0</b></p>
+      <div class="shopwrap">
+        <div class="shopmoss"><canvas id="shBust" width="150" height="150"></canvas><p id="shopMoss"></p></div>
+        <ul id="shopList" class="shoplist"></ul>
+      </div>
+      <div class="menu row"><button id="btnShopGo" class="primary">LAUNCH NEXT STAGE</button></div>
+    </section>
+
+    <section id="cont" class="screen hidden">
+      <h2 class="over">CONTINUE?</h2>
+      <p class="final">Retry this stage from the start with fresh retries.<br><b id="contLeft">1</b> continue(s) left.</p>
+      <div class="menu"><button id="btnContYes" class="primary">CONTINUE</button><button id="btnContNo">GIVE UP</button></div>
+    </section>
+
     <section id="gameover" class="screen hidden">
       <h2 id="goTitle" class="over">GAME OVER</h2>
       <p class="final">Score <b id="goScore">0</b> &middot; Stage <b id="goStage">1</b></p>
@@ -99,23 +143,25 @@
 
   <noscript><p style="color:#fff;padding:2rem">SpaceFox needs JavaScript enabled.</p></noscript>
 
-  <script src="js/util.js?v=4"></script>
-  <script src="js/config.js?v=4"></script>
-  <script src="assets/atlas.js?v=4"></script>
-  <script src="js/audio.js?v=4"></script>
-  <script src="js/gfx.js?v=4"></script>
-  <script src="js/fx.js?v=4"></script>
-  <script src="js/input.js?v=4"></script>
-  <script src="js/scores.js?v=4"></script>
-  <script src="js/sprites.js?v=4"></script>
-  <script src="js/comms.js?v=4"></script>
-  <script src="js/stages.js?v=4"></script>
-  <script src="js/game.js?v=4"></script>
-  <script src="js/render.js?v=4"></script>
-  <script src="js/hud.js?v=4"></script>
-  <script src="js/ui.js?v=4"></script>
-  <script src="js/touchcfg.js?v=4"></script>
-  <script src="js/mobile.js?v=4"></script>
-  <script src="js/main.js?v=4"></script>
+  <script src="js/util.js?v=12"></script>
+  <script src="js/config.js?v=12"></script>
+  <script src="assets/atlas.js?v=12"></script>
+  <script src="js/audio.js?v=12"></script>
+  <script src="js/gfx.js?v=12"></script>
+  <script src="js/fx.js?v=12"></script>
+  <script src="js/input.js?v=12"></script>
+  <script src="js/scores.js?v=12"></script>
+  <script src="js/sprites.js?v=12"></script>
+  <script src="js/comms.js?v=12"></script>
+  <script src="js/stages.js?v=12"></script>
+  <script src="js/campaign.js?v=12"></script>
+  <script src="js/game.js?v=12"></script>
+  <script src="js/render.js?v=12"></script>
+  <script src="js/hud.js?v=12"></script>
+  <script src="js/ui.js?v=12"></script>
+  <script src="js/flow.js?v=12"></script>
+  <script src="js/touchcfg.js?v=12"></script>
+  <script src="js/mobile.js?v=12"></script>
+  <script src="js/main.js?v=12"></script>
 </body>
 </html>

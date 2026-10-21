@@ -6,7 +6,7 @@
     REPO: 'https://github.com/nbwillcox/SpaceFox',
     /* pseudo-3D camera: vanishing point, focal length, eye height above the ship's neutral plane */
     VX: 480, VY: 215, F: 560, EYE: 155,
-    FLOOR: -210, WALL: 900, ZFAR: 3200, SHIP_Z: 60,
+    FLOOR: -210, CEIL: 430, WALL: 900, ZFAR: 3200, SHIP_Z: 60,
     BX: 470, BY0: -150, BY1: 170,                       /* ship movement bounds (world units) */
     START_RETRIES: 3, SHIELD: 100,
     SPEED: 720,                                          /* rail speed, world units per second */

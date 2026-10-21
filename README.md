@@ -4,7 +4,7 @@ A free, retro-flavored on-rails space shooter with neon-meets-painted art: pilot
 
 **Play it in your browser:** https://nbwillcox.github.io/SpaceFox/
 
-Work in progress (milestone 3: first boss and radio chatter). See `DESIGN.md` for the full plan.
+Work in progress (milestone 4: campaign). See `DESIGN.md` for the full plan.
 
 ## Controls
 
@@ -20,6 +20,14 @@ Work in progress (milestone 3: first boss and radio chatter). See `DESIGN.md` fo
 Pickups: laser upgrades (twin, then hyper), bombs, repair, overshield, boost refill, extra retries and stars. Settings has *Rapid fire while FIRE is held* (default on for phones) if you prefer holding to charging.
 
 Stage 1 ends with the **Bulwark**, an armored walking fortress: plain lasers barely scratch it (lock-on volleys, deflected mortars and bombs do full damage), it telegraphs claw swipes with a red lane on the water, and once half its armor is gone the furnace core opens. Moss and Captain Vale chatter over the radio with typed text and a babble voice (Settings > Comms chatter: full / warnings only / off).
+
+## Campaign
+
+Pick a difficulty (Easy / Normal / Hard) and fly the **route map**: Ember Canyon, then a fork between *Drift Belt* (asteroids, easy route) and *Glasswater Reach* (hard route), then *Foundry Spine* (lava) or *Ghost Station* (tunnels). Each stage ends with a boss: Bulwark, Rockjaw, Tidecaller, Foundry Warden and Prism Sentinel. Later stages are still on the way.
+
+- **Medals:** Bronze, silver or gold from the share of enemies you destroyed. Gold on a stage opens the hard route after it.
+- **Credits and the hangar:** Stars, score and medals earn credits. Spend them between stages on laser core, shield cells, bomb bay, lock-on array, roll servos, boost cells and a star magnet, or restock bombs.
+- **Retries and continues** depend on the difficulty. *Stage Select* on the title screen replays any stage you have unlocked.
 
 All of these can be changed in **Settings > Key bindings**.
 

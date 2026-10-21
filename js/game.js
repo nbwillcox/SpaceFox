@@ -3,7 +3,7 @@
 (function (G) {
   'use strict';
   const U = G.U, C = G.C, FX = G.fx, A = G.audio, I = G.input, SP = G.sprites;
-  const clamp = U.clamp;
+  const clamp = U.clamp, CP = G.campaign;
 
   /* enemy table: w = drawn width in world units, r = hit radius */
   const EN = {
@@ -14,13 +14,33 @@
     tank: { w: 210, r: 88, hp: 5, score: 300, frame: 4 },
     mine: { w: 125, r: 56, hp: 1, score: 150, frame: 5 },
     boss: { w: 860, r: 300, rx: 440, ry: 300, hp: 160, score: 10000, frame: 0, atlas: 'boss' },
+    rock: { w: 210, r: 86, hp: 3, score: 60, proc: 1 },
+    boulder: { w: 380, r: 160, hp: 99999, score: 0, proc: 1 },
+  };
+  /* boss definitions: sprite, size, hit ellipse, health, armor and the two attack sequences */
+  const BOSSES = {
+    bulwark: { name: 'BULWARK', atlas: 'boss', frame: 0, w: 860, rx: 440, ry: 300, hp: 160, armor: true, furnace: true, y: 80, z: 1050, sway: 170, minion: 'fighter', score: 10000,
+      seq1: ['mortar', 'swipe', 'mortar', 'mortar', 'swipe'], seq2: ['swipe', 'spawn', 'inferno', 'swipe', 'mortar', 'inferno'],
+      p2: 'Its armor cracked! The furnace core is open - hit it with everything!' },
+    rockjaw: { name: 'ROCKJAW', atlas: 'enemy', frame: 2, w: 620, rx: 300, ry: 250, hp: 150, armor: false, y: 70, z: 1100, sway: 200, minion: 'fighter', score: 8000,
+      seq1: ['fan', 'rain', 'ring', 'fan', 'rain'], seq2: ['rain', 'spawn', 'ring', 'inferno', 'swipe', 'fan'],
+      p2: 'Its hull is splitting! It is getting desperate, Captain!' },
+    tidecaller: { name: 'TIDECALLER', atlas: 'enemy', frame: 1, w: 700, rx: 330, ry: 170, hp: 170, armor: false, y: 90, z: 1150, sway: 330, minion: 'fighter', score: 9000,
+      seq1: ['orbs', 'fan', 'orbs', 'spawn'], seq2: ['orbs', 'ring', 'inferno', 'spawn', 'swipe'],
+      p2: 'The pods are overheating! Orb storm incoming!' },
+    warden: { name: 'FOUNDRY WARDEN', atlas: 'enemy', frame: 4, w: 700, rx: 330, ry: 210, hp: 180, armor: false, y: -40, z: 1100, sway: 150, minion: 'mine', score: 9000, floor: true,
+      seq1: ['mortar', 'swipe', 'spawn', 'mortar', 'swipe'], seq2: ['swipe', 'inferno', 'spawn', 'mortar', 'swipe', 'ring'],
+      p2: 'The cannon is glowing! Watch the quake lanes!' },
+    prism: { name: 'PRISM SENTINEL', atlas: 'enemy', frame: 3, w: 560, rx: 230, ry: 280, hp: 170, armor: false, y: 70, z: 1100, sway: 230, minion: 'crystal', score: 9000,
+      seq1: ['ring', 'inferno', 'spawn', 'ring'], seq2: ['ring', 'inferno', 'orbs', 'spawn', 'ring', 'inferno'],
+      p2: 'It is cracking! The shards are faster now!' },
   };
   const PICK = { star: { frame: 9, w: 74 }, shield: { frame: 6, w: 84 }, boost: { frame: 7, w: 80 }, repair: { frame: 8, w: 80 } };
 
   const Game = {
     demo: false, bot: false, score: 0, hits: 0, stars: 0, retries: 3, shield: 100, over: false,
     stage: null, stageNo: 1, dist: 0, evIdx: 0, phase: 'intro', phaseT: 0, t: 0, scroll: 0, speed: 1,
-    ents: [], shots: [], eshots: [], boss: null, bossWarned: false, bossSpawned: false, cIdx: 0, missiles: [], refl: [], tier: 1, volleys: {}, volId: 0, bombFx: null, boost: 100, boostLock: false, bombs: 3, over2: 0, msg: null, hasBackdrop: true,
+    ents: [], shots: [], eshots: [], run: null, diff: { shotDmg: 1, rate: 1, hp: 1 }, maxShield: 100, baseTier: 1, bombCap: 3, spawned: 0, mkills: 0, stageStartScore: 0, stageId: 's1', result: null, rollCd: 0.15, rollLen: 0.5, boostDrain: 34, boostRegen: 12, magnet: 0, boss: null, bossWarned: false, bossSpawned: false, cIdx: 0, missiles: [], refl: [], tier: 1, volleys: {}, volId: 0, bombFx: null, boost: 100, boostLock: false, bombs: 3, over2: 0, msg: null, hasBackdrop: true,
     ship: null, cam: { x: 0, y: 0 }, flashT: 0, hurtT: 0, nextLife: 50000, onOver: null, onClear: null, stats: { kills: 0, shotsFired: 0, hitsTaken: 0, crashes: 0 },
   };
   G.game = Game;
@@ -37,22 +57,40 @@
   };
 
   /* ---------- setup ---------- */
-  Game.reset = function (demo, stageNo) {
+  function resolveId(ref) {
+    let id = typeof ref === 'number' ? 's' + ref : String(ref || 's1');
+    if (!G.stages[id]) id = 's1';
+    return id;
+  }
+  /** reset(demo, stage id or number, run): a campaign run carries credits, upgrades, retries and score between stages */
+  Game.reset = function (demo, stageRef, run) {
+    const id = resolveId(stageRef);
     Game.demo = !!demo; Game.bot = !!demo;
-    Game.score = 0; Game.hits = 0; Game.stars = 0; Game.over = false; Game.over2 = 0;
-    Game.retries = G.debug && G.debug.lives ? G.debug.lives : C.START_RETRIES; Game.bombs = 3; Game.tier = 1; Game.nextLife = 50000;
+    if (demo) { Game.onOver = null; Game.onClear = null; }
+    Game.run = run || CP.newRun((G.debug && G.debug.diff) || 'normal', id);
+    Game.diff = CP.DIFF[Game.run.diff] || CP.DIFF.normal;
+    Game.score = Game.run.score; Game.hits = 0; Game.stars = 0; Game.over = false; Game.over2 = 0;
+    Game.retries = G.debug && G.debug.lives ? G.debug.lives : Game.run.retries;
+    Game.nextLife = 50000; while (Game.nextLife <= Game.score) Game.nextLife += 70000;
     Game.stats = { kills: 0, shotsFired: 0, hitsTaken: 0, crashes: 0 };
-    startStage(stageNo || 1);
+    startStage(id);
   };
-  function startStage(n) {
-    Game.stageNo = n; Game.stage = G.stages[n] || G.stages[1];
+  function startStage(id) {
+    Game.stageId = id; Game.stage = G.stages[id] || G.stages.s1; Game.stageNo = Game.stage.n;
+    const up = Game.run.up;
+    Game.maxShield = C.SHIELD + 25 * up.shield; Game.baseTier = 1 + up.laser; Game.tier = Game.baseTier;
+    Game.bombCap = CP.bombCap(Game.run); Game.bombs = Math.min(Game.bombCap, Math.max(Game.run.bombs, 3));
+    Game.rollCd = [0.15, 0.08, 0.02][up.roll]; Game.rollLen = 0.5 + 0.07 * up.roll;
+    Game.boostDrain = 34 * (1 - 0.18 * up.boost); Game.boostRegen = 12 * (1 + 0.35 * up.boost); Game.magnet = up.magnet;
+    Game.stageStartScore = Game.score; Game.spawned = 0; Game.mkills = 0; Game.stars = 0; Game.result = null;
+    Game.stats = { kills: 0, shotsFired: 0, hitsTaken: 0, crashes: 0 };
     Game.dist = (G.debug && G.debug.at) || 0; Game.evIdx = 0; Game.t = 0;
     while (Game.evIdx < Game.stage.events.length && Game.stage.events[Game.evIdx].d < Game.dist + C.ZFAR) Game.evIdx++;   /* ?at=D skips the early events */
     Game.ents = []; Game.shots = []; Game.eshots = []; Game.missiles = []; Game.refl = []; Game.bombFx = null; FX.reset();
     Game.boss = null; Game.bossWarned = false; Game.bossSpawned = false; G.comms.clear(); Game.cIdx = 0;
     const cm = Game.stage.comms || [];
     while (Game.cIdx < cm.length && cm[Game.cIdx].d < Game.dist) Game.cIdx++;
-    Game.shield = C.SHIELD; Game.boost = 100; Game.boostLock = false; Game.speed = 1; Game.flashT = 0; Game.hurtT = 0;
+    Game.shield = Game.maxShield; Game.boost = 100; Game.boostLock = false; Game.speed = 1; Game.flashT = 0; Game.hurtT = 0;
     Game.ship = { x: 0, y: 0, vx: 0, vy: 0, bank: 0, rollT: 0, rollDir: 0, rollCd: 0, inv: 1.5, fire: 0, dead: false, boosting: false, braking: false, over: 0, alpha: 1, flicker: 0, face: 0, holdT: 0, charging: false, chargeT: 0, lockT: 0, locks: [], bombCd: 0 };
     Game.phase = 'intro'; Game.phaseT = 0;
     Game.msg = Game.demo ? null : { title: 'STAGE ' + Game.stage.n, sub: Game.stage.name, t: 0, dur: 2.6 };
@@ -62,7 +100,8 @@
   /* ---------- spawning ---------- */
   function addEnemy(kind, x, y, z, extra) {
     const spec = EN[kind];
-    const e = Object.assign({ t: 'enemy', kind, x, y, z, ox: x, oy: y, hp: spec.hp, age: 0, fire: U.rand(0.6, 1.8), flash: 0, ph: U.rand(0, 6.28), rot: 0, state: 0, hold: 0, burst: 0 }, extra || {});
+    if (!(extra && (extra.minion || extra.boss)) && spec.score > 0) Game.spawned++;
+    const e = Object.assign({ t: 'enemy', kind, x, y, z, ox: x, oy: y, hp: spec.hp > 5000 ? spec.hp : Math.max(1, Math.round(spec.hp * Game.diff.hp)), var: (Math.random() * 6) | 0, age: 0, fire: U.rand(0.6, 1.8), flash: 0, ph: U.rand(0, 6.28), rot: 0, state: 0, hold: 0, burst: 0 }, extra || {});
     Game.ents.push(e);
     return e;
   }
@@ -101,6 +140,14 @@
         break;
       }
       case 'pickup': Game.ents.push({ t: 'pickup', kind: ev.kind, x: ev.x, y: ev.y, z, age: 0 }); break;
+      case 'rock': addEnemy('rock', ev.x, ev.y, z, { vx: U.rand(-45, 45), vy: U.rand(-30, 30) }); break;
+      case 'boulder': addEnemy('boulder', ev.x, ev.y, z, { vx: U.rand(-20, 20), vy: 0 }); break;
+      case 'gate': {
+        const hx0 = ev.x - ev.w / 2, hx1 = ev.x + ev.w / 2, hy0 = ev.y - ev.h / 2, hy1 = ev.y + ev.h / 2, top = C.CEIL, bot = C.FLOOR - 20;
+        addBox(-1100, hx0, bot, top, z, 110, 1); addBox(hx1, 1100, bot, top, z, 110, 1);
+        addBox(hx0, hx1, bot, hy0, z, 110, 1); addBox(hx0, hx1, hy1, top, z, 110, 1);
+        break;
+      }
     }
   }
 
@@ -127,14 +174,14 @@
     snd('death');
     FX.explosion(s.x, s.y, C.SHIP_Z, 2.4);
     FX.addShake(20); Game.flashT = 0.6;
-    Game.tier = 1; s.charging = false; s.locks = [];
+    Game.tier = Game.baseTier; s.charging = false; s.locks = [];
     if (!Game.demo) { Game.retries--; if (Game.retries < 0) Game.over = true; }
     say('moss', 'gasp', Game.over ? 'No! Captain!' : 'Captain! Switching to the backup Firebrand!', { pri: 2 });
   }
   function respawn() {
     const s = Game.ship;
     s.dead = false; s.inv = 3; s.alpha = 1; s.over = 0; s.x = 0; s.y = 0; s.vx = s.vy = 0; s.rollT = 0;
-    Game.shield = C.SHIELD; Game.boost = 100; Game.boostLock = false;
+    Game.shield = Game.maxShield; Game.boost = 100; Game.boostLock = false;
     /* clear the lane ahead so the retry is fair */
     Game.ents = Game.ents.filter((e) => e.boss || e.z > 1500 || e.t === 'pickup' && e.z > 300);
     if (Game.boss) { Game.boss.atk = null; Game.boss.tele = null; Game.boss.xOff = 0; Game.boss.zOff = 0; Game.boss.atkT = 2; }
@@ -163,18 +210,20 @@
     if (bs && bs.tele && bs.tele.side) { tx = -bs.tele.side * 320; ty = 40; }
     /* pickups */
     for (const e of Game.ents) if (e.t === 'pickup' && e.z > 100 && e.z < 1000 && Math.abs(e.x - s.x) < 350) { tx = e.x; ty = e.y; break; }
-    /* dodge boxes and shots */
+    /* dodge boxes: search a grid for the nearest spot that is clear of every box about to reach the ship */
     let danger = false;
-    for (const e of Game.ents) {
-      if (e.t !== 'box' || e.z > 900 || e.z + e.depth < 0) continue;
-      if (s.x + 70 > e.x0 && s.x - 70 < e.x1 && s.y + 45 > e.y0 && s.y - 45 < e.y1) {
+    const near = Game.ents.filter((o) => o.t === 'box' && o.z < 1100 && o.z + o.depth > -40);
+    if (near.length) {
+      const clear = (x, y) => !near.some((o) => x + 75 > o.x0 && x - 75 < o.x1 && y + 48 > o.y0 && y - 48 < o.y1);
+      if (!clear(s.x, s.y) || !clear(tx, ty)) {
         danger = true;
-        const goL = e.x0 - 110, goR = e.x1 + 110;
-        const free = (x) => !Game.ents.some((o) => o.t === 'box' && o.z < 900 && o.z + o.depth > 0 && x + 70 > o.x0 && x - 70 < o.x1 && s.y + 45 > o.y0 && s.y - 45 < o.y1);
-        const lOk = free(goL) && goL > -C.BX, rOk = free(goR) && goR < C.BX;
-        if (lOk && (!rOk || Math.abs(goL - s.x) < Math.abs(goR - s.x))) tx = goL; else if (rOk) tx = goR;
-        else ty = e.y1 + 90 < C.BY1 ? e.y1 + 90 : e.y0 - 90;
-        break;
+        let best = null, bd = 1e9;
+        for (let gx = -440; gx <= 440; gx += 40) for (let gy = -120; gy <= 160; gy += 40) {
+          if (!clear(gx, gy)) continue;
+          const d = (gx - s.x) * (gx - s.x) + (gy - s.y) * (gy - s.y) * 1.4;
+          if (d < bd) { bd = d; best = [gx, gy]; }
+        }
+        if (best) { tx = best[0]; ty = best[1]; }
       }
     }
     for (const sh of Game.eshots) if (sh.z < 700 && sh.z > 0 && Math.abs(sh.x - s.x) < 90 && Math.abs(sh.y - s.y) < 90) { tx = s.x + (sh.x > s.x ? -200 : 200); danger = true; }
@@ -198,6 +247,9 @@
     botState.rollIn -= dt;
     if (botState.rollIn <= 0 && Game.eshots.some((sh) => sh.z < 500 && sh.z > 60 && Math.abs(sh.x - s.x) < 70 && Math.abs(sh.y - s.y) < 70)) { I._roll = dx > 0 ? 1 : -1; botState.rollIn = 1.2; }
   }
+
+  const DEMO_STAGES = ['s1', 's2a', 's3a', 's2b', 's3b'];
+  Game.DEMO_STAGES = DEMO_STAGES;
 
   /* ---------- update ---------- */
   Game.update = function (dt) {
@@ -226,8 +278,8 @@
     if (Game.phase === 'clear') {
       Game.scroll = C.SPEED * 0.6; Game.dist += Game.scroll * dt; moveWorld(dt);
       s.y += (40 - s.y) * dt; s.x += (0 - s.x) * dt;
-      if (Game.phaseT > 4.5 && Game.onClear) { const f = Game.onClear; Game.onClear = null; f(); }
-      if (Game.demo && Game.phaseT > 3) startStage(1);
+      if (Game.phaseT > 4.5 && Game.onClear) { const f = Game.onClear; Game.onClear = null; f(Game.result); }
+      if (Game.demo && Game.phaseT > 3) { Game.demoI = ((Game.demoI || 0) + 1) % DEMO_STAGES.length; Game.reset(true, DEMO_STAGES[Game.demoI]); }
       return;
     }
 
@@ -243,15 +295,15 @@
     if (s.inv > 0) s.inv = Math.max(0, s.inv - dt);
     if (s.rollCd > 0) s.rollCd -= dt;
     const rr = I.takeRoll();
-    if (rr && s.rollT <= 0 && s.rollCd <= 0 && Game.phase !== 'intro') { s.rollT = 0.5; s.rollDir = rr; s.rollCd = 0.15; s.vx += rr * 620; snd('roll'); }
+    if (rr && s.rollT <= 0 && s.rollCd <= 0 && Game.phase !== 'intro') { s.rollT = Game.rollLen; s.rollDir = rr; s.rollCd = Game.rollCd; s.vx += rr * 620; snd('roll'); }
     if (s.rollT > 0) s.rollT = Math.max(0, s.rollT - dt);
     /* boost / brake */
     const wantBoost = I.held.boost && !Game.boostLock && Game.boost > 0, wantBrake = I.held.brake && !wantBoost;
     if (wantBoost && !s.boosting) snd('boost');
     if (wantBrake && !s.braking) snd('brake');
     s.boosting = wantBoost; s.braking = wantBrake;
-    if (wantBoost) { Game.boost = Math.max(0, Game.boost - 34 * dt); if (Game.boost <= 0) Game.boostLock = true; }
-    else { Game.boost = Math.min(100, Game.boost + (wantBrake ? 24 : 12) * dt); if (Game.boostLock && Game.boost > 30) Game.boostLock = false; }
+    if (wantBoost) { Game.boost = Math.max(0, Game.boost - Game.boostDrain * dt); if (Game.boost <= 0) Game.boostLock = true; }
+    else { Game.boost = Math.min(100, Game.boost + (wantBrake ? 24 : Game.boostRegen) * dt); if (Game.boostLock && Game.boost > 30) Game.boostLock = false; }
     const targetSpeed = wantBoost ? 1.75 : wantBrake ? 0.55 : 1;
     Game.speed += (targetSpeed - Game.speed) * Math.min(1, 4 * dt);
     Game.scroll = C.SPEED * Game.speed * (Game.phase === 'intro' ? Math.min(1, Game.phaseT / 1.2) : 1);
@@ -296,7 +348,10 @@
     Game.phase = 'clear'; Game.phaseT = 0;
     snd('stageClear'); A.engine(0, false);
     Game.msg = Game.demo ? null : { title: 'STAGE CLEAR', sub: Game.stage.name, t: 0, dur: 4 };
-    addScore(2000 + Game.shield * 10);
+    addScore(2000 + Math.round(Game.shield) * 10);
+    const res = { stageId: Game.stageId, stageScore: Game.score - Game.stageStartScore, score: Game.score, kills: Game.mkills, spawned: Game.spawned, stars: Game.stars, hitsTaken: Game.stats.hitsTaken, shieldLeft: Math.round(Game.shield), retries: Game.retries, bombs: Game.bombs };
+    res.medal = CP.rate(res); res.credits = CP.creditsFor(res, Game.run);
+    Game.result = res;
   }
 
   function moveWorld(dt) {
@@ -339,9 +394,10 @@
       if (e.t === 'pickup') {
         e.z -= sc * dt;
         if (e.z < -200) { Game.ents.splice(i, 1); continue; }
-        if (!s.dead && Math.abs(e.z - C.SHIP_Z) < 90) {
-          const dx = e.x - s.x, dy = e.y - s.y;
-          if (dx * dx + dy * dy < 110 * 110) { collect(e); Game.ents.splice(i, 1); }
+        if (Game.magnet && !s.dead && e.z < 1100 && e.z > -50) { const k = Math.min(1, dt * (0.9 + 1.1 * Game.magnet)); e.x += (s.x - e.x) * k; e.y += (s.y - e.y) * k; }
+        if (!s.dead && Math.abs(e.z - C.SHIP_Z) < 90 * (1 + 0.3 * Game.magnet)) {
+          const dx = e.x - s.x, dy = e.y - s.y, rad = 110 * (1 + 0.4 * Game.magnet);
+          if (dx * dx + dy * dy < rad * rad) { collect(e); Game.ents.splice(i, 1); }
         }
         continue;
       }
@@ -377,10 +433,10 @@
   function collect(p) {
     const s = Game.ship;
     if (p.kind === 'star') { Game.stars++; addScore(50); snd('star'); }
-    else if (p.kind === 'repair') { Game.shield = Math.min(C.SHIELD, Game.shield + 40); snd('pickup'); FX.text('REPAIR', 480, 150); }
+    else if (p.kind === 'repair') { Game.shield = Math.min(Game.maxShield, Game.shield + 40); snd('pickup'); FX.text('REPAIR', 480, 150); }
     else if (p.kind === 'shield') { s.over = 50; snd('shield'); FX.text('OVERSHIELD', 480, 150); }
     else if (p.kind === 'boost') { Game.boost = 100; Game.boostLock = false; snd('pickup'); FX.text('BOOST', 480, 150); }
-    else if (p.kind === 'bomb') { Game.bombs = Math.min(6, Game.bombs + 1); snd('pickup'); FX.text('BOMB +1', 480, 150, '#ff9a6a'); }
+    else if (p.kind === 'bomb') { Game.bombs = Math.min(Game.bombCap, Game.bombs + 1); snd('pickup'); FX.text('BOMB +1', 480, 150, '#ff9a6a'); }
     else if (p.kind === 'laser') { if (Game.tier < 3) { Game.tier++; FX.text(Game.tier === 2 ? 'TWIN LASER' : 'HYPER LASER', 480, 150, '#7de8ff'); snd('weaponUp'); } else { addScore(500); snd('pickup'); } }
     else if (p.kind === 'life') { Game.retries++; snd('extraLife'); FX.text('1UP', 480, 150); }
     FX.burst(p.x, p.y, p.z, 8, 120, 'rgba(255,230,120,1)');
@@ -391,7 +447,7 @@
     e.hp -= n; e.flash = 0.08; snd('hit');
     FX.burst(e.x, e.y, e.z, 3, 120, 'rgba(160,230,255,1)');
     if (e.hp <= 0 && !e.dead) {
-      e.dead = true; Game.hits++; Game.stats.kills++;
+      e.dead = true; Game.hits++; Game.stats.kills++; if (!e.minion) Game.mkills++;
       const spec = EN[e.kind];
       addScore(spec.score);
       if (vol) { const c = (Game.volleys[vol] = (Game.volleys[vol] || 0) + 1); if (c > 1) { addScore(c * 50); const q = Game.proj(e.x, e.y, e.z); FX.text('x' + c + ' COMBO', clamp(q.x, 80, 880), clamp(q.y - 50, 120, 440), '#ffb347'); snd('bonus', c); } }
@@ -406,88 +462,102 @@
   function enemyShot(e, size, speed, spread) {
     const s = Game.ship, dz = Math.max(200, e.z - C.SHIP_Z), t = dz / speed;
     let tx = s.x + U.rand(-1, 1) * (spread || 0), ty = s.y + U.rand(-1, 1) * (spread || 0) * 0.6;
-    const sh = { x: e.x, y: e.y, z: e.z - 20, vx: (tx - e.x) / t, vy: (ty - e.y) / t, vz: -speed, r: 18 * size, dmg: Math.round(11 * size), size };
+    const sh = { x: e.x, y: e.y, z: e.z - 20, vx: (tx - e.x) / t, vy: (ty - e.y) / t, vz: -speed, r: 18 * size, dmg: Math.max(1, Math.round(11 * size * Game.diff.shotDmg)), size };
     Game.eshots.push(sh);
     snd('enemyShot');
   }
 
 
   /* ---------- bosses ---------- */
+  function bossDef() { return BOSSES[Game.stage.boss] || BOSSES.bulwark; }
   function warnBoss() {
     Game.bossWarned = true;
     if (Game.demo) return;
-    Game.msg = { title: 'WARNING', sub: Game.stage.bossName + ' APPROACHING', t: 0, dur: 3 };
+    const def = bossDef();
+    Game.msg = { title: 'WARNING', sub: def.name + ' APPROACHING', t: 0, dur: 3 };
     snd('warning'); setTimeout(() => snd('warning'), 700);
     A.music('boss', Game.stage.key);
-    say('moss', 'gasp', 'Captain, huge signature ahead! That is the ' + Game.stage.bossName + ' - a walking fortress!', { pri: 2 });
-    say('moss', 'worry', 'Its armor shrugs off plain lasers. Lock on, or roll and send its mortars home!', { pri: 1 });
+    const lines = Game.stage.bossWarn || [
+      { who: 'moss', expr: 'gasp', text: 'Captain, huge signature ahead! That is the ' + def.name + ' - a walking fortress!', pri: 2 },
+      { who: 'moss', expr: 'worry', text: 'Its armor shrugs off plain lasers. Lock on, or roll and send its mortars home!', pri: 1 }];
+    for (const l of lines) say(l.who, l.expr, l.text, { pri: l.pri });
   }
   function spawnBoss() {
     Game.bossSpawned = true;
-    const e = addEnemy('boss', 0, 80, 3200, { boss: true, name: Game.stage.bossName, maxHp: EN.boss.hp, phase: 1, state: 'enter', baseZ: 3200, atk: null, atkT: 2, seqI: 0, tele: null, xOff: 0, zOff: 0, dieT: 0, expT: 0 });
+    const def = bossDef(), maxHp = Math.round(def.hp * Game.diff.hp);
+    const e = addEnemy('boss', 0, def.y, 3200, { boss: true, def, name: def.name, maxHp, hp: maxHp, phase: 1, state: 'enter', baseZ: 3200, atk: null, atkT: 2, seqI: 0, tele: null, xOff: 0, zOff: 0, dieT: 0, expT: 0 });
     Game.boss = e;
   }
   function shotTo(e, tx, ty, speed, size) {
     const dz = Math.max(200, e.z - C.SHIP_Z), t = dz / speed;
-    Game.eshots.push({ x: e.x, y: e.y, z: e.z - 20, vx: (tx - e.x) / t, vy: (ty - e.y) / t, vz: -speed, r: 18 * size, dmg: Math.round(11 * size), size });
+    Game.eshots.push({ x: e.x, y: e.y, z: e.z - 20, vx: (tx - e.x) / t, vy: (ty - e.y) / t, vz: -speed, r: 18 * size, dmg: Math.max(1, Math.round(11 * size * Game.diff.shotDmg)), size });
     snd('enemyShot');
   }
   function bossDamage(e, n, vol, tag) {
     if (e.dying || e.state === 'enter') return;
     let m = 1;
-    if (e.phase === 1) m = tag === 'deflect' ? 3 : (vol || tag === 'bomb') ? 1 : 0.34;
+    if (e.def.armor && e.phase === 1) m = tag === 'deflect' ? 3 : (vol || tag === 'bomb') ? 1 : 0.34;
     else m = tag === 'deflect' ? 2 : 1;
     e.hp -= n * m; e.flash = 0.08;
     if (m < 1) snd('armor'); else snd('hit');
-    FX.burst(e.x + U.rand(-250, 250), e.y + U.rand(-150, 150), e.z - 30, m < 1 ? 2 : 4, 160, m < 1 ? 'rgba(255,230,160,1)' : 'rgba(255,150,80,1)');
+    FX.burst(e.x + U.rand(-e.def.rx * 0.6, e.def.rx * 0.6), e.y + U.rand(-e.def.ry * 0.5, e.def.ry * 0.5), e.z - 30, m < 1 ? 2 : 4, 160, m < 1 ? 'rgba(255,230,160,1)' : 'rgba(255,150,80,1)');
     if (e.phase === 1 && e.hp <= e.maxHp * 0.5) bossPhase2(e);
-    if (e.hp <= 0) { e.hp = 0; e.dying = true; e.dieT = 0; e.expT = 0; e.atk = null; e.tele = null; Game.eshots = []; Game.hits++; addScore(EN.boss.score); snd('boom', 2); FX.doFlash(0.6, '255,220,160'); }
+    if (e.hp <= 0) { e.hp = 0; e.dying = true; e.dieT = 0; e.expT = 0; e.atk = null; e.tele = null; Game.eshots = []; Game.hits++; addScore(e.def.score); snd('boom', 2); FX.doFlash(0.6, '255,220,160'); }
   }
   function bossPhase2(e) {
     e.phase = 2; e.atk = null; e.tele = null; e.atkT = 1.8; e.seqI = 0;
-    FX.explosion(e.x - 200, e.y + 40, e.z - 40, 1.6); FX.explosion(e.x + 200, e.y + 40, e.z - 40, 1.6);
+    FX.explosion(e.x - e.def.rx * 0.45, e.y + 40, e.z - 40, 1.6); FX.explosion(e.x + e.def.rx * 0.45, e.y + 40, e.z - 40, 1.6);
     FX.doFlash(0.5, '255,170,90'); FX.addShake(14); snd('crash');
     Game.eshots = [];
     Game.ents.push({ t: 'pickup', kind: 'repair', x: -100, y: 40, z: 1500, age: 0 });
     Game.ents.push({ t: 'pickup', kind: 'bomb', x: 120, y: 30, z: 1900, age: 0 });
-    say('moss', 'shock', 'Its armor cracked! The furnace core is open - hit it with everything!', { pri: 2 });
+    say('moss', 'shock', e.def.p2, { pri: 2 });
     say('vale', 'shout', 'Burn it down!', { pri: 1 });
   }
   function updateBoss(e, dt) {
-    const s = Game.ship;
+    const s = Game.ship, def = e.def;
     if (e.dying) {
       e.dieT += dt; e.expT -= dt;
-      if (e.expT <= 0) { e.expT = 0.13; FX.explosion(e.x + U.rand(-380, 380), e.y + U.rand(-260, 260), e.z - 40, 1.5); snd('boom', 1); }
-      e.baseY = (e.baseY === undefined ? 80 : e.baseY) - 70 * dt;
+      if (e.expT <= 0) { e.expT = 0.13; FX.explosion(e.x + U.rand(-def.rx * 0.9, def.rx * 0.9), e.y + U.rand(-def.ry * 0.9, def.ry * 0.9), e.z - 40, 1.5); snd('boom', 1); }
+      e.baseY = (e.baseY === undefined ? def.y : e.baseY) - 70 * dt;
       e.y = e.baseY;
       if (e.dieT > 3) { e.dead = true; Game.boss = null; bossDown(); }
       return;
     }
     if (e.state === 'enter') {
-      e.baseZ += (1050 - e.baseZ) * Math.min(1, 1.7 * dt);
-      e.z = e.baseZ; e.x = Math.sin(e.age * 0.6) * 170; e.y = 80;
-      if (Math.abs(e.baseZ - 1050) < 30) { e.state = 'fight'; e.atkT = 1.4; }
+      e.baseZ += (def.z - e.baseZ) * Math.min(1, 1.7 * dt);
+      e.z = e.baseZ; e.x = Math.sin(e.age * 0.6) * def.sway; e.y = def.y;
+      if (Math.abs(e.baseZ - def.z) < 30) { e.state = 'fight'; e.atkT = 1.4; }
       return;
     }
-    if (!e.atk) { e.atkT -= dt; if (e.atkT <= 0) startAtk(e); }
+    if (!e.atk) { e.atkT -= dt * Game.diff.rate; if (e.atkT <= 0) startAtk(e); }
     else runAtk(e, dt);
-    const baseX = Math.sin(e.age * 0.6) * 170;
-    e.x = baseX + e.xOff; e.y = 80 + Math.sin(e.age * 1.1) * 18; e.z = e.baseZ + e.zOff;
+    const baseX = Math.sin(e.age * 0.6) * def.sway;
+    e.x = baseX + e.xOff; e.y = def.y + (def.floor ? 0 : Math.sin(e.age * 1.1) * 18); e.z = e.baseZ + e.zOff;
     if (e.phase === 2 && Math.random() < dt * 4) FX.burst(e.x + U.rand(-120, 120), e.y + U.rand(-60, 100), e.z - 50, 1, 120, 'rgba(255,150,60,1)');
   }
-  const SEQ1 = ['mortar', 'swipe', 'mortar', 'mortar', 'swipe'], SEQ2 = ['swipe', 'spawn', 'inferno', 'swipe', 'mortar', 'inferno'];
   function startAtk(e) {
-    const seq = e.phase === 1 ? SEQ1 : SEQ2, k = seq[e.seqI++ % seq.length], s = Game.ship;
+    const seq = e.phase === 1 ? e.def.seq1 : e.def.seq2, k = seq[e.seqI++ % seq.length], s = Game.ship;
     e.atk = { k, t: 0, n: 0, hit: false, side: s.x < 0 ? -1 : 1 };
     if (k === 'swipe') e.tele = { side: e.atk.side, t: 0 };
   }
   function runAtk(e, dt) {
-    const a = e.atk, s = Game.ship; a.t += dt;
+    const a = e.atk, s = Game.ship, p2 = e.phase === 2; a.t += dt;
     let done = false;
-    if (a.k === 'mortar') {
-      const vol = e.phase === 1 ? 3 : 4;
-      if (a.t >= a.n * 0.6 && a.n < vol) { a.n++; for (let i = 0; i < 5; i++) shotTo(e, s.x + (i - 2) * 140, s.y + U.rand(-50, 50), 640, 1.2); }
-      if (a.t > vol * 0.6 + 0.6) done = true;
+    if (a.k === 'mortar' || a.k === 'fan') {
+      const wide = a.k === 'fan', vol = (wide ? 3 : 3) + (p2 ? 1 : 0), cnt = wide ? 7 : 5, gap = wide ? 105 : 140, per = wide ? 0.5 : 0.6;
+      if (a.t >= a.n * per && a.n < vol) { a.n++; for (let i = 0; i < cnt; i++) shotTo(e, s.x + (i - (cnt - 1) / 2) * gap, s.y + U.rand(-50, 50), wide ? 700 : 640, wide ? 1 : 1.2); }
+      if (a.t > vol * per + 0.6) done = true;
+    } else if (a.k === 'ring') {
+      const rings = p2 ? 3 : 2;
+      if (a.t >= a.n * 0.75 && a.n < rings) { a.n++; const cnt = 10, off = a.n * 0.3; for (let i = 0; i < cnt; i++) { const an = off + i / cnt * Math.PI * 2; shotTo(e, s.x + Math.cos(an) * 330, s.y + Math.sin(an) * 230, 600, 1); } }
+      if (a.t > rings * 0.75 + 0.7) done = true;
+    } else if (a.k === 'orbs') {
+      if (a.t >= a.n * 0.9 && a.n < 3) { a.n++; shotTo(Object.assign({}, e, { x: e.x - 160 }), s.x + U.rand(-120, 120), s.y + U.rand(-60, 60), 430, 2); shotTo(Object.assign({}, e, { x: e.x + 160 }), s.x + U.rand(-120, 120), s.y + U.rand(-60, 60), 430, 2); }
+      if (a.t > 3.3) done = true;
+    } else if (a.k === 'rain') {
+      if (a.t < 1.6 && a.t >= a.n * 0.22) { a.n++; addEnemy('rock', clamp(s.x + U.rand(-420, 420), -520, 520), 300, e.z + 300, { vx: 0, vy: -260, minion: true }); }
+      if (a.t > 2.4) done = true;
     } else if (a.k === 'swipe') {
       const side = a.side;
       if (a.t < 1.1) { e.tele.t = a.t; }
@@ -497,7 +567,14 @@
       else { e.zOff = 0; e.xOff = 0; e.tele = null; done = true; }
       if (!a.hit && e.zOff < -500 && !s.dead && s.x * side > -70) { a.hit = true; if (hurt(30, 'crash')) s.vx += -side * 700; }
     } else if (a.k === 'spawn') {
-      if (a.n === 0 && a.t > 0.4) { a.n = 1; for (let i = -1; i <= 1; i++) addEnemy('fighter', e.x + i * 180, e.y - 30, e.z - 120, { amp: 120, vzo: -520, ph: i }); snd('spawn'); }
+      if (a.n === 0 && a.t > 0.4) {
+        a.n = 1;
+        for (let i = -1; i <= 1; i++) {
+          if (e.def.minion === 'fighter') addEnemy('fighter', e.x + i * 180, e.y - 30, e.z - 120, { amp: 120, vzo: -520, ph: i, minion: true });
+          else addEnemy(e.def.minion, clamp(e.x + i * 220, -440, 440), Math.max(e.y - 20, C.FLOOR + 60), e.z - 120, { minion: true });
+        }
+        snd('spawn');
+      }
       if (a.t > 1.3) done = true;
     } else if (a.k === 'inferno') {
       if (a.t < 2.2 && a.t >= a.n * 0.17) { a.n++; shotTo(e, s.x + U.rand(-260, 260), s.y + U.rand(-120, 120), 720, 1); }
@@ -506,14 +583,14 @@
     if (done) { e.atk = null; e.atkT = e.phase === 1 ? 1.5 : 0.9; }
   }
   function bossDown() {
-    say('vale', 'warm', 'Bulwark is down. Cinder Squadron, form up.', { pri: 2 });
-    say('moss', 'laugh', 'Told you the Firebrand purrs, Captain!', { pri: 1 });
+    const ls = Game.stage.victory || [{ who: 'vale', expr: 'warm', text: 'Bulwark is down. Cinder Squadron, form up.', pri: 2 }, { who: 'moss', expr: 'laugh', text: 'Told you the Firebrand purrs, Captain!', pri: 1 }];
+    for (const l of ls) say(l.who, l.expr, l.text, { pri: l.pri });
     endStage();
   }
 
   /* circle test (ellipse for the boss) */
   function inHit(e, x, y, pad) {
-    const spec = EN[e.kind];
+    const spec = e.def || EN[e.kind];
     if (spec.rx) { const dx = (x - e.x) / (spec.rx + pad), dy = (y - e.y) / (spec.ry + pad); return dx * dx + dy * dy < 1; }
     const r = spec.r + pad;
     return (x - e.x) * (x - e.x) + (y - e.y) * (y - e.y) < r * r;
@@ -626,12 +703,18 @@
     if (e.flash > 0) e.flash -= dt;
     switch (e.kind) {
       case 'boss': updateBoss(e, dt); break;
+      case 'rock': case 'boulder': {
+        e.z -= sc * dt; e.rot += dt * (e.ph > 3 ? 0.7 : -0.7);
+        e.x += (e.vx || 0) * dt; e.y += (e.vy || 0) * dt;
+        collideShip(e, e.kind === 'boulder' ? 28 : 20);
+        break;
+      }
       case 'fighter': {
         e.z -= (sc - e.vzo) * dt;                                   /* vzo is negative: own speed toward the camera */
         e.x = e.ox + Math.sin(e.age * 2.2 + e.ph) * e.amp;
         e.y = e.oy + Math.sin(e.age * 1.7 + e.ph * 1.3) * 34;
         if (e.z < 2200) {
-          e.fire -= dt;
+          e.fire -= dt * Game.diff.rate;
           if (e.fire <= 0 && e.z > 500) { e.fire = U.rand(2.2, 3.6); enemyShot(e, 1, 760, 120); }
         }
         collideShip(e, 22);
@@ -644,7 +727,7 @@
         if (e.state === 2 && e.z > C.ZFAR) return true;
         e.x = e.ox + Math.sin(e.age * 1.4 + e.ph) * e.amp;
         e.y = e.oy + Math.sin(e.age * 1.1) * 40;
-        e.fire -= dt;
+        e.fire -= dt * Game.diff.rate;
         if (e.fire <= 0 && e.z > 500 && e.z < 2400) { e.fire = 1.7; enemyShot(e, 1, 800, 40); const b = { x: e.x + 40, y: e.y }; enemyShot(Object.assign({}, e, { x: e.x - 50 }), 1, 800, 40); }
         collideShip(e, 20);
         break;
@@ -655,7 +738,7 @@
         else e.z += 480 * dt;
         if (e.state === 2 && e.z > C.ZFAR) return true;
         e.x = e.ox + Math.sin(e.age * 0.8) * 200;
-        e.fire -= dt;
+        e.fire -= dt * Game.diff.rate;
         if (e.fire <= 0 && e.z > 500 && e.z < 2400) { e.fire = 2.0; for (const dx of [-90, -30, 30, 90]) enemyShot(Object.assign({}, e, { x: e.x + dx }), 1, 700, 60); }
         collideShip(e, 30);
         break;
@@ -663,7 +746,7 @@
       case 'crystal': {
         e.z -= sc * dt; e.rot += dt * 1.6;
         e.y = e.oy + Math.sin(e.age * 1.6) * 30;
-        e.fire -= dt;
+        e.fire -= dt * Game.diff.rate;
         if (e.fire <= 0 && e.z > 600 && e.z < 2300) { if (e.burst <= 0) { e.burst = 3; } }
         if (e.burst > 0) { e.fire -= 0; e.sub = (e.sub || 0) - dt; if (e.sub <= 0) { e.sub = 0.16; e.burst--; enemyShot(e, 1, 820, 20); if (e.burst <= 0) e.fire = 2.4; } }
         collideShip(e, 20);
@@ -671,7 +754,7 @@
       }
       case 'tank': {
         e.z -= sc * dt;
-        e.fire -= dt;
+        e.fire -= dt * Game.diff.rate;
         if (e.fire <= 0 && e.z > 700 && e.z < 2300) { e.fire = 2.6; enemyShot(e, 1.6, 520, 30); }
         collideShip(e, 20);
         break;
@@ -693,7 +776,7 @@
     const s = Game.ship;
     if (s.dead || e.dead || e.boss || Math.abs(e.z - C.SHIP_Z) > 60) return;
     const r = EN[e.kind].r * 0.8 + 40, dx = e.x - s.x, dy = e.y - s.y;
-    if (dx * dx + dy * dy < r * r && hurt(dmg, 'crash')) { e.hp = 0; damageEnemy(e, 99); }
+    if (dx * dx + dy * dy < r * r && hurt(dmg, 'crash')) { if (e.kind === 'boulder') s.vx += (s.x < e.x ? -1 : 1) * 650; else { e.hp = 0; damageEnemy(e, 99); } }
   }
 
   Game.heroXY = () => null;

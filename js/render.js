@@ -15,18 +15,51 @@
   function floorY(g, z) { return C.VY + (C.EYE + g.cam.y - C.FLOOR) * C.F / (C.F + z); }
 
   /* ---------- backdrop ---------- */
-  R.backdrop = function (ctx, g) {
+  /* canyon-family themes share one renderer: a painted or gradient sky, a floor (water or lava) and two rock walls */
+  const THEMES = {
+    canyon: { img: 'bg', haze: HAZE, rock: ROCK, floor: ['#3fc9cf', '#1e93b0', '#0a4f7a'], band: '190,245,255', foam: '210,250,255', glint: [90, 110, 255], strata: 'dark', box: BOX_COL, wall: C.WALL },
+    water: { img: 'tint', haze: [130, 160, 205], rock: [[120, 138, 168], [100, 122, 156], [136, 152, 180], [88, 108, 142]], floor: ['#5ee0d2', '#1fa6b8', '#0b5a86'], band: '200,250,255', foam: '225,252,255', glint: [120, 255, 230], strata: 'dark', box: [[104, 120, 150], [86, 140, 160], [150, 170, 200]], wall: 1050 },
+    tunnel: { haze: [6, 8, 20], box: [[64, 78, 118], [86, 60, 124], [96, 108, 150]] },
+    space: { haze: [10, 6, 30], box: [[90, 86, 120], [90, 86, 120], [90, 86, 120]] },
+    foundry: { img: null, sky: ['#14070b', '#3a0f10', '#8a2a10'], haze: [120, 48, 34], rock: [[74, 62, 66], [88, 72, 70], [60, 54, 62], [100, 76, 66]], floor: ['#ffb03a', '#e0521a', '#7a1a0a'], band: '255,215,120', foam: '255,230,150', glint: [255, 130, 40], strata: 'glow', box: [[98, 84, 82], [140, 70, 50], [120, 100, 90]], wall: 820 },
+  };
+  const tinted = { c: null };
+  function tintedBg() {
+    if (tinted.c) return tinted.c;
+    const im = SP.bg;
+    if (!im || !im.complete || !im.naturalWidth) return null;
+    const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+    const x = c.getContext('2d');
+    x.drawImage(im, 0, 0);
+    x.globalCompositeOperation = 'color'; x.globalAlpha = 0.6; x.fillStyle = '#3f86e8';          /* recolour toward a cool blue, keeping the painting's light and shadow */
+    x.fillRect(0, 0, c.width, c.height);
+    tinted.c = c;
+    return c;
+  }
+
+  function wallWidth(th, zAbs) { return th.wall + 230 * Math.sin(zAbs * 0.00035) + 130 * Math.sin(zAbs * 0.0011 + 1.3); }
+
+  function backdropCanyon(ctx, g, th) {
     const W = C.W, H = C.H, dist = g.dist;
     ctx.fillStyle = '#1b1236'; ctx.fillRect(0, 0, W, H);
-    if (SP.bg && SP.bg.complete && SP.bg.naturalWidth) {
-      const w = 1180, h = w * SP.bg.naturalHeight / SP.bg.naturalWidth;
-      ctx.drawImage(SP.bg, (W - w) / 2 - g.cam.x * 0.06, C.VY - h * 0.645 - g.cam.y * 0.04, w, h);
+    const img = th.img === 'bg' ? SP.bg : th.img === 'tint' ? tintedBg() : null;
+    if (img && (img.complete !== false) && (img.naturalWidth || img.width)) {
+      const w = 1180, h = w * (img.naturalHeight || img.height) / (img.naturalWidth || img.width);
+      ctx.drawImage(img, (W - w) / 2 - g.cam.x * 0.06, C.VY - h * 0.645 - g.cam.y * 0.04, w, h);
+    } else if (th.sky) {
+      const sk = ctx.createLinearGradient(0, 0, 0, C.VY + 20);
+      sk.addColorStop(0, th.sky[0]); sk.addColorStop(0.6, th.sky[1]); sk.addColorStop(1, th.sky[2]);
+      ctx.fillStyle = sk; ctx.fillRect(0, 0, W, C.VY + 20);
+      /* a smoky glow at the horizon */
+      const hg = ctx.createRadialGradient(C.VX - g.cam.x * 0.06, C.VY, 10, C.VX, C.VY, 420);
+      hg.addColorStop(0, 'rgba(255,170,70,0.7)'); hg.addColorStop(1, 'rgba(255,100,40,0)');
+      ctx.fillStyle = hg; ctx.fillRect(0, 0, W, C.VY + 40);
     }
-    /* water */
+    /* floor */
     const grd = ctx.createLinearGradient(0, C.VY, 0, H);
-    grd.addColorStop(0, '#3fc9cf'); grd.addColorStop(0.35, '#1e93b0'); grd.addColorStop(1, '#0a4f7a');
+    grd.addColorStop(0, th.floor[0]); grd.addColorStop(0.35, th.floor[1]); grd.addColorStop(1, th.floor[2]);
     ctx.fillStyle = grd; ctx.fillRect(0, C.VY, W, H - C.VY);
-    /* moving light bands on the water */
+    /* moving light bands */
     const len = 190, base = Math.floor(dist / len);
     for (let k = 30; k >= 0; k--) {
       const idx = base + k;
@@ -34,7 +67,7 @@
       const zA = idx * len - dist, zB = zA + len * 0.55;
       if (zB < -60) continue;
       const ya = floorY(g, Math.max(zA, -60)), yb = floorY(g, zB), f = clamp(1 - zA / C.ZFAR, 0, 1);
-      ctx.fillStyle = 'rgba(190,245,255,' + (0.05 + 0.11 * f * f).toFixed(3) + ')';
+      ctx.fillStyle = 'rgba(' + th.band + ',' + (0.05 + 0.11 * f * f).toFixed(3) + ')';
       ctx.fillRect(0, yb, W, ya - yb);
     }
     /* rock walls, far to near */
@@ -44,53 +77,126 @@
       if (zB < -50) continue;
       const za = Math.max(zA, -50);
       for (let side = -1; side <= 1; side += 2) {
-        const xa = side * wallW(zAbsA), xb = side * wallW(zAbsA + L);
+        const xa = side * wallWidth(th, zAbsA), xb = side * wallWidth(th, zAbsA + L);
         const a0 = g.proj(xa, C.FLOOR, za), a1 = g.proj(xa, C.FLOOR + 1500, za), b0 = g.proj(xb, C.FLOOR, zB), b1 = g.proj(xb, C.FLOOR + 1500, zB);
         const hsh = hash(Math.floor(zAbsA / L) * 2 + (side > 0 ? 1 : 0)), fog = 0.85 * Math.pow(clamp(za / C.ZFAR, 0, 1), 1.3);
-        const col = ROCK[(hsh * 4) | 0], lit = side < 0 ? 1.06 : 0.78;
+        const col = th.rock[(hsh * 4) | 0], lit = side < 0 ? 1.06 : 0.78;
         const c = [col[0] * lit + hsh * 14, col[1] * lit + hsh * 8, col[2] * lit];
-        ctx.fillStyle = mixc(c, HAZE, fog);
+        ctx.fillStyle = mixc(c, th.haze, fog);
         ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.lineTo(b1.x, b1.y); ctx.lineTo(b0.x, b0.y); ctx.closePath(); ctx.fill();
-        /* strata */
-        ctx.strokeStyle = mixc([c[0] * 0.55, c[1] * 0.5, c[2] * 0.55], HAZE, fog); ctx.lineWidth = Math.max(1, 3 * a0.s);
+        /* strata (dark seams) or glowing seams in the foundry */
+        const glow = th.strata === 'glow';
+        ctx.strokeStyle = glow ? 'rgba(255,' + (110 + hsh * 60 | 0) + ',40,' + (0.85 * (1 - fog)).toFixed(2) + ')' : mixc([c[0] * 0.55, c[1] * 0.5, c[2] * 0.55], th.haze, fog);
+        ctx.lineWidth = Math.max(1, (glow ? 4 : 3) * a0.s);
         for (let y = 170; y < 1200; y += 190 + hsh * 60) {
           const p = g.proj(xa, C.FLOOR + y, za), q = g.proj(xb, C.FLOOR + y, zB);
           ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
         }
-        /* waterline foam */
+        /* waterline foam / lava glow */
         const f0 = g.proj(xa, C.FLOOR + 36, za), f1 = g.proj(xb, C.FLOOR + 36, zB);
-        ctx.fillStyle = 'rgba(210,250,255,' + (0.42 * (1 - fog)).toFixed(2) + ')';
+        ctx.fillStyle = 'rgba(' + th.foam + ',' + (0.42 * (1 - fog)).toFixed(2) + ')';
         ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(f0.x, f0.y); ctx.lineTo(f1.x, f1.y); ctx.lineTo(b0.x, b0.y); ctx.closePath(); ctx.fill();
-        /* crystal glints */
+        /* crystal glints / vents */
         if (hsh > 0.84) {
           const cy = C.FLOOR + 160 + hsh * 380, m = g.proj(xa + (xb - xa) * 0.5, cy, za + L * 0.5), sz = 70 * m.s;
-          ctx.fillStyle = mixc([90, 110, 255], HAZE, fog);
+          ctx.fillStyle = mixc(th.glint, th.haze, fog);
           ctx.beginPath(); ctx.moveTo(m.x, m.y - sz * 1.3); ctx.lineTo(m.x + sz * 0.5, m.y); ctx.lineTo(m.x, m.y + sz * 0.5); ctx.lineTo(m.x - sz * 0.5, m.y); ctx.closePath(); ctx.fill();
         }
       }
     }
-    /* distance haze at the horizon */
     const hz = ctx.createLinearGradient(0, C.VY - 60, 0, C.VY + 70);
-    hz.addColorStop(0, 'rgba(150,108,176,0)'); hz.addColorStop(0.5, 'rgba(160,120,190,0.35)'); hz.addColorStop(1, 'rgba(150,108,176,0)');
+    hz.addColorStop(0, 'rgba(' + th.haze.join(',') + ',0)'); hz.addColorStop(0.5, 'rgba(' + th.haze.join(',') + ',0.35)'); hz.addColorStop(1, 'rgba(' + th.haze.join(',') + ',0)');
     ctx.fillStyle = hz; ctx.fillRect(0, C.VY - 60, C.W, 130);
+  }
+
+  /* open space: nebula glow and a field of star streaks flying past */
+  const STARS = (function () { const out = []; let a = 12345; const r = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; for (let i = 0; i < 170; i++) out.push({ x: (r() - 0.5) * 5200, y: (r() - 0.5) * 3000, z: r() * 3600, c: r() }); return out; })();
+  function backdropSpace(ctx, g) {
+    const W = C.W, H = C.H;
+    const bgk = ctx.createLinearGradient(0, 0, 0, H);
+    bgk.addColorStop(0, '#07041a'); bgk.addColorStop(0.55, '#150a35'); bgk.addColorStop(1, '#0a0f2a');
+    ctx.fillStyle = bgk; ctx.fillRect(0, 0, W, H);
+    const blobs = [[0.22, 0.38, 380, 'rgba(160,60,220,0.28)'], [0.8, 0.3, 330, 'rgba(50,140,255,0.22)'], [0.5, 0.55, 460, 'rgba(255,80,140,0.14)']];
+    for (const [bx, by, br, col] of blobs) {
+      const gx = bx * W - g.cam.x * 0.05, gy = by * H - g.cam.y * 0.04;
+      const gr = ctx.createRadialGradient(gx, gy, 10, gx, gy, br); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    }
+    for (const st of STARS) {
+      const z = ((st.z - g.dist * 0.9) % 3600 + 3600) % 3600;
+      const p = g.proj(st.x, st.y, z), q = g.proj(st.x, st.y, z + 70 + g.scroll * 0.08);
+      if (p.x < -20 || p.x > W + 20 || p.y < -20 || p.y > H + 20) continue;
+      const a = clamp(1 - z / 3600, 0.08, 1);
+      ctx.strokeStyle = st.c > 0.8 ? 'rgba(160,220,255,' + a + ')' : st.c > 0.4 ? 'rgba(255,255,255,' + a + ')' : 'rgba(255,190,150,' + a + ')';
+      ctx.lineWidth = Math.max(0.8, 2.6 * p.s);
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    }
+  }
+
+  /* a dead station corridor: four lit panel planes closing in toward a dark far end */
+  const TUN = { w: 720 };
+  function backdropTunnel(ctx, g) {
+    const W = C.W, H = C.H, dist = g.dist, L = 120, wb = Math.floor(dist / L) * L, BLK = [6, 8, 20];
+    ctx.fillStyle = '#05070f'; ctx.fillRect(0, 0, W, H);
+    for (let i = 28; i >= 0; i--) {
+      const zAbsA = wb + i * L, zA = zAbsA - dist, zB = zA + L;
+      if (zB < -50) continue;
+      const za = Math.max(zA, -50), idx = Math.floor(zAbsA / L), fog = Math.pow(clamp(za / (C.ZFAR * 0.9), 0, 1), 1.1);
+      const lit = idx % 5 === 0, hsh = hash(idx * 3);
+      const planes = [
+        { n: 'floor', pts: [[-TUN.w, C.FLOOR], [TUN.w, C.FLOOR]], base: [34, 44, 72] },
+        { n: 'ceil', pts: [[-TUN.w, C.CEIL], [TUN.w, C.CEIL]], base: [28, 36, 62] },
+      ];
+      for (const pl of planes) {
+        const a = g.proj(pl.pts[0][0], pl.pts[0][1], za), b2 = g.proj(pl.pts[1][0], pl.pts[1][1], za), c2 = g.proj(pl.pts[1][0], pl.pts[1][1], zB), d2 = g.proj(pl.pts[0][0], pl.pts[0][1], zB);
+        ctx.fillStyle = mixc([pl.base[0] + hsh * 14, pl.base[1] + hsh * 14, pl.base[2] + hsh * 18], BLK, fog);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.closePath(); ctx.fill();
+        /* centre light strip */
+        const sa = g.proj(-60, pl.pts[0][1], za), sb = g.proj(60, pl.pts[0][1], za), sc = g.proj(60, pl.pts[0][1], zB), sd = g.proj(-60, pl.pts[0][1], zB);
+        ctx.fillStyle = lit ? mixc([120, 240, 255], BLK, fog) : mixc([40, 70, 110], BLK, fog);
+        ctx.beginPath(); ctx.moveTo(sa.x, sa.y); ctx.lineTo(sb.x, sb.y); ctx.lineTo(sc.x, sc.y); ctx.lineTo(sd.x, sd.y); ctx.closePath(); ctx.fill();
+      }
+      for (let side = -1; side <= 1; side += 2) {
+        const x = side * TUN.w, a = g.proj(x, C.FLOOR, za), b2 = g.proj(x, C.CEIL, za), c2 = g.proj(x, C.CEIL, zB), d2 = g.proj(x, C.FLOOR, zB);
+        ctx.fillStyle = mixc([(side < 0 ? 50 : 38) + hsh * 12, (side < 0 ? 62 : 48) + hsh * 12, (side < 0 ? 98 : 80) + hsh * 16], BLK, fog);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.closePath(); ctx.fill();
+        /* window strip + frame lines */
+        const w0 = g.proj(x, C.FLOOR + 190, za), w1 = g.proj(x, C.FLOOR + 330, za), w2 = g.proj(x, C.FLOOR + 330, zB), w3 = g.proj(x, C.FLOOR + 190, zB);
+        ctx.fillStyle = lit ? mixc([255, 120, 220], BLK, fog) : mixc([30, 40, 80], BLK, fog);
+        ctx.beginPath(); ctx.moveTo(w0.x, w0.y); ctx.lineTo(w1.x, w1.y); ctx.lineTo(w2.x, w2.y); ctx.lineTo(w3.x, w3.y); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = mixc([90, 120, 190], BLK, fog); ctx.lineWidth = Math.max(1, 2.5 * a.s);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.stroke();
+      }
+    }
+    const vg = ctx.createRadialGradient(C.VX, C.VY + 30, 10, C.VX, C.VY + 30, 260);
+    vg.addColorStop(0, 'rgba(120,180,255,0.35)'); vg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  }
+
+  R.backdrop = function (ctx, g) {
+    const t = (g.stage && g.stage.theme) || 'canyon';
+    if (t === 'space') backdropSpace(ctx, g);
+    else if (t === 'tunnel') backdropTunnel(ctx, g);
+    else backdropCanyon(ctx, g, THEMES[t] || THEMES.canyon);
   };
 
   /* ---------- boxes (pillars, arches, barriers) ---------- */
   function drawBox(ctx, g, e) {
     const z0 = Math.max(e.z, -120), z1 = e.z + e.depth;
     if (z1 < -120) return;
-    const fog = 0.85 * Math.pow(clamp(z0 / C.ZFAR, 0, 1), 1.3), base = BOX_COL[e.color % 3];
+    const th = THEMES[(g.stage && g.stage.theme)] || THEMES.canyon, hz = th.haze;
+    const fog = 0.85 * Math.pow(clamp(z0 / C.ZFAR, 0, 1), 1.3), base = (th.box || BOX_COL)[e.color % 3];
     const eyeX = g.cam.x, eyeY = C.EYE + g.cam.y;
     const P = (x, y, z) => g.proj(x, y, z);
     const poly = (pts, fill, edge) => {
       ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.closePath();
       ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = edge; ctx.lineWidth = Math.max(1, 2 * pts[0].s); ctx.stroke();
     };
-    const edge = mixc([base[0] * 0.5, base[1] * 0.5, base[2] * 0.55], HAZE, fog);
-    if (e.y1 < eyeY) poly([P(e.x0, e.y1, z0), P(e.x1, e.y1, z0), P(e.x1, e.y1, z1), P(e.x0, e.y1, z1)], mixc([base[0] * 1.2, base[1] * 1.2, base[2] * 1.2], HAZE, fog), edge);
-    if (e.x0 > eyeX) poly([P(e.x0, e.y0, z0), P(e.x0, e.y1, z0), P(e.x0, e.y1, z1), P(e.x0, e.y0, z1)], mixc([base[0] * 0.8, base[1] * 0.8, base[2] * 0.85], HAZE, fog), edge);
-    if (e.x1 < eyeX) poly([P(e.x1, e.y0, z0), P(e.x1, e.y1, z0), P(e.x1, e.y1, z1), P(e.x1, e.y0, z1)], mixc([base[0] * 0.65, base[1] * 0.65, base[2] * 0.7], HAZE, fog), edge);
-    poly([P(e.x0, e.y0, z0), P(e.x1, e.y0, z0), P(e.x1, e.y1, z0), P(e.x0, e.y1, z0)], mixc(base, HAZE, fog), edge);
+    const edge = mixc([base[0] * 0.5, base[1] * 0.5, base[2] * 0.55], hz, fog);
+    if (e.y1 < eyeY) poly([P(e.x0, e.y1, z0), P(e.x1, e.y1, z0), P(e.x1, e.y1, z1), P(e.x0, e.y1, z1)], mixc([base[0] * 1.2, base[1] * 1.2, base[2] * 1.2], hz, fog), edge);
+    if (e.x0 > eyeX) poly([P(e.x0, e.y0, z0), P(e.x0, e.y1, z0), P(e.x0, e.y1, z1), P(e.x0, e.y0, z1)], mixc([base[0] * 0.8, base[1] * 0.8, base[2] * 0.85], hz, fog), edge);
+    if (e.x1 < eyeX) poly([P(e.x1, e.y0, z0), P(e.x1, e.y1, z0), P(e.x1, e.y1, z1), P(e.x1, e.y0, z1)], mixc([base[0] * 0.65, base[1] * 0.65, base[2] * 0.7], hz, fog), edge);
+    poly([P(e.x0, e.y0, z0), P(e.x1, e.y0, z0), P(e.x1, e.y1, z0), P(e.x0, e.y1, z0)], mixc(base, hz, fog), edge);
   }
 
   /* ---------- the ship ---------- */
@@ -114,8 +220,8 @@
     const q = g.proj(s.x, s.y, C.SHIP_Z), k = 0.62 * q.s;
     /* shadow on the water */
     const sh = g.proj(s.x, C.FLOOR, C.SHIP_Z), hgt = s.y - C.FLOOR;
-    ctx.fillStyle = 'rgba(0,20,40,' + (0.38 * (1 - clamp(hgt / 520, 0, 0.8))).toFixed(2) + ')';
-    ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 70 * sh.s * (1 - clamp(hgt / 900, 0, 0.5)), 15 * sh.s, 0, 0, TAU); ctx.fill();
+    if (g.stage.theme !== 'space') ctx.fillStyle = 'rgba(0,20,40,' + (0.38 * (1 - clamp(hgt / 520, 0, 0.8))).toFixed(2) + ')';
+    if (g.stage.theme !== 'space') { ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 70 * sh.s * (1 - clamp(hgt / 900, 0, 0.5)), 15 * sh.s, 0, 0, TAU); ctx.fill(); }
     const fr = shipFrame(g);
     let alpha = 1;
     if (s.inv > 0 && s.rollT <= 0 && g.hurtT <= 0) alpha = ((g.t * 14) | 0) % 2 ? 0.4 : 1;
@@ -227,8 +333,9 @@
   }
   function drawEnemy(ctx, g, e) {
     if (e.dead) return;
-    const spec = g.EN[e.kind], q = g.proj(e.x, e.y, e.z);
+    const spec = e.def || g.EN[e.kind], q = g.proj(e.x, e.y, e.z);
     if (e.z < -200) return;
+    if (spec.proc) { drawRock(ctx, g, e, spec, q); return; }
     const fa = clamp((C.ZFAR - e.z) / 500, 0, 1);
     const atl = spec.atlas || 'enemy', k = (spec.w / SP.size(atl, spec.frame).w) * q.s;
     let rot = 0;
@@ -237,7 +344,7 @@
     else if (e.kind === 'mine' || e.kind === 'crystal') rot = e.kind === 'mine' ? e.rot : Math.sin(e.rot) * 0.2;
     SP.draw(ctx, atl, spec.frame, q.x, q.y, k, false, fa, rot);
     if (e.flash > 0) { ctx.globalCompositeOperation = 'lighter'; SP.draw(ctx, atl, spec.frame, q.x, q.y, k, false, 0.7 * fa, rot); ctx.globalCompositeOperation = 'source-over'; }
-    if (e.boss && e.phase === 2 && !e.dying) {                      /* the open furnace glows */
+    if (e.boss && e.def.furnace && e.phase === 2 && !e.dying) {                      /* the open furnace glows */
       const h = SP.size(atl, spec.frame).h * k, r = 150 * q.s * (1 + 0.1 * Math.sin(g.t * 9));
       ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.75;
       ctx.drawImage(G.gfx.glow('rgba(255,150,50,1)'), q.x - 0.5 * r * 1.2 - 8 * q.s, q.y - h * 0.02 - r, r * 2.4, r * 2);
@@ -293,6 +400,35 @@
     ctx.beginPath(); ctx.arc(q.x, q.y, 60 + k * 900, 0, TAU); ctx.stroke();
     ctx.strokeStyle = 'rgba(255,150,60,1)'; ctx.lineWidth = 8 * (1 - k) + 1;
     ctx.beginPath(); ctx.arc(q.x, q.y, 30 + k * 640, 0, TAU); ctx.stroke();
+    ctx.restore();
+  }
+  /* procedural asteroids: a lumpy polygon with shading and craters, cached per variant and theme */
+  const rockCache = {};
+  function rockTex(v, theme) {
+    const key = v + theme;
+    if (rockCache[key]) return rockCache[key];
+    const c = document.createElement('canvas'); c.width = c.height = 200;
+    const x = c.getContext('2d'); x.translate(100, 100);
+    let a = 977 + v * 131; const r = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; };
+    const pal = theme === 'foundry' ? ['#8a6a5a', '#4a3430', '#1c1214'] : theme === 'tunnel' ? ['#7d8aa8', '#3c4660', '#12172a'] : ['#b09478', '#6a5444', '#241a14'];
+    x.beginPath();
+    const n = 18, pts = [];
+    for (let i = 0; i < n; i++) { const an = i / n * TAU, rad = 74 + r() * 22; pts.push([Math.cos(an) * rad, Math.sin(an) * rad]); }
+    x.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < n; i++) x.lineTo(pts[i][0], pts[i][1]); x.closePath();
+    const g2 = x.createRadialGradient(-30, -34, 8, 0, 0, 100); g2.addColorStop(0, pal[0]); g2.addColorStop(0.55, pal[1]); g2.addColorStop(1, pal[2]);
+    x.fillStyle = g2; x.fill(); x.strokeStyle = 'rgba(255,230,200,0.35)'; x.lineWidth = 2.5; x.stroke();
+    for (let k = 0; k < 5; k++) {
+      const cx = (r() - 0.5) * 90, cy = (r() - 0.5) * 90, cr = 8 + r() * 16;
+      x.fillStyle = 'rgba(0,0,0,0.32)'; x.beginPath(); x.ellipse(cx, cy, cr, cr * 0.8, 0, 0, TAU); x.fill();
+      x.strokeStyle = 'rgba(255,230,200,0.3)'; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, cr, 0.4, 2.6); x.stroke();
+    }
+    return (rockCache[key] = c);
+  }
+  function drawRock(ctx, g, e, spec, q) {
+    const fa = clamp((C.ZFAR - e.z) / 500, 0, 1), w = spec.w * q.s, tex = rockTex(e.var || 0, g.stage.theme);
+    ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(e.rot || 0); ctx.globalAlpha = fa;
+    ctx.drawImage(tex, -w / 2, -w / 2, w, w);
+    if (e.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6 * fa; ctx.drawImage(tex, -w / 2, -w / 2, w, w); }
     ctx.restore();
   }
   function drawBossShadow(ctx, g, e) {

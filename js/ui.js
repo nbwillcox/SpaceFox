@@ -4,7 +4,7 @@
   const S = G.settings, A = G.audio, U = G.U;
   const $ = (id) => document.getElementById(id);
   const UI = { cur: 'title', back: 'title', lastIdx: -1 };
-  const NAMES = ['title', 'pause', 'settings', 'scores', 'gameover'];
+  const NAMES = ['title', 'pause', 'settings', 'scores', 'gameover', 'diff', 'map', 'results', 'shop', 'cont'];
 
   UI.show = function (name) {
     NAMES.forEach((n) => $(n).classList.toggle('hidden', n !== name));
@@ -40,10 +40,10 @@
     });
   };
 
-  UI.showGameOver = function (score, stage, win) {
+  UI.showGameOver = function (score, stage, win, title) {
     $('goScore').textContent = U.fmt(score);
     $('goStage').textContent = stage;
-    $('goTitle').textContent = win ? 'STAGE CLEAR' : 'GAME OVER';
+    $('goTitle').textContent = title || (win ? 'STAGE CLEAR' : 'GAME OVER');
     $('goTitle').classList.toggle('over', !win);
     const q = G.scores.qualifies(score);
     $('goEntry').classList.toggle('hidden', !q);
@@ -65,16 +65,17 @@
 
   function bind() {
     const on = (id, fn) => $(id).addEventListener('click', () => { A.resume(); A.sfx.select(); fn(); });
-    on('btnStart', () => G.main.startGame());
+    on('btnStart', () => G.flow.begin('campaign'));
+    on('btnStageSel', () => G.flow.begin('free'));
     on('btnScores', () => { UI.back = 'title'; UI.lastIdx = -1; UI.show('scores'); });
     on('btnSettings', () => { UI.back = 'title'; UI.show('settings'); });
     on('btnResume', () => G.main.resume());
     on('btnPauseSettings', () => { UI.back = 'pause'; UI.show('settings'); });
     on('btnQuit', () => G.main.toTitle());
     on('btnSettingsBack', () => UI.show(UI.back));
-    on('btnScoresPlay', () => G.main.startGame());
+    on('btnScoresPlay', () => G.flow.begin('campaign'));
     on('btnScoresBack', () => G.main.toTitle());
-    on('btnRetry', () => G.main.startGame());
+    on('btnRetry', () => G.flow.begin('campaign'));
     on('btnGoTitle', () => G.main.toTitle());
     on('btnSaveScore', saveScore);
     $('goName').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3); });

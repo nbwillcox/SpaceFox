@@ -77,3 +77,81 @@ button.small { padding: 8px 12px; font-size: 12px; align-self: flex-start; }
 body.touch .keysec { display: none; }
 @media (max-height: 700px) { #settings .panel { max-height: 70vh; overflow-y: auto; } }
 select { font: 700 14px var(--font); padding: 6px 8px; color: #dff6ff; background: rgba(10, 20, 50, 0.85); border: 1.5px solid rgba(55, 230, 255, 0.55); border-radius: 4px; }
+
+/* ---- campaign screens ---- */
+.menu.wide { min-width: min(560px, 92vw); }
+.diffbtn { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; text-align: left; letter-spacing: 0.12em; }
+.diffbtn b { font-size: 18px; color: #fff; }
+.diffbtn span { font: 500 12px/1.3 var(--font); letter-spacing: 0.02em; color: #9fb7d8; }
+.diffbtn.last { border-color: var(--pink); box-shadow: 0 0 12px rgba(255, 122, 46, 0.4); }
+.menu.row { flex-direction: row; justify-content: center; min-width: 0; }
+.mapinfo { margin: 0; font-size: 13px; letter-spacing: 0.1em; color: #9fb7d8; }
+.mapinfo b { color: var(--gold); }
+.board { position: relative; padding: 8px 4px; }
+.board svg { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.board svg path { fill: none; stroke: rgba(120, 160, 210, 0.3); stroke-width: 2; }
+.board svg path.hot { stroke: var(--gold); stroke-width: 3; filter: drop-shadow(0 0 4px rgba(255, 210, 74, 0.8)); }
+#mapCols { position: relative; display: flex; gap: 22px; align-items: center; justify-content: center; }
+.mapcol { display: flex; flex-direction: column; gap: 10px; }
+.mapcard { width: 112px; padding: 8px 6px; display: flex; flex-direction: column; gap: 3px; align-items: center; letter-spacing: 0.04em; text-align: center; font-size: 11px; background: rgba(8, 16, 40, 0.86); }
+.mapcard .mn { font-size: 10px; color: #7f95b8; letter-spacing: 0.14em; }
+.mapcard .mt { font-size: 12px; color: #fff; line-height: 1.15; }
+.mapcard .mr { font-size: 9px; color: #9fe8ff; letter-spacing: 0.1em; }
+.mapcard.hard .mr { color: #ff9a6a; }
+.mapcard.sel { border-color: var(--gold); box-shadow: 0 0 16px rgba(255, 210, 74, 0.7); }
+.mapcard.dim { opacity: 0.55; }
+.mapcard.soon { opacity: 0.35; }
+.mapcard.done::after { content: "\2713"; color: #7dff9a; font-size: 12px; }
+.medal { display: inline-block; padding: 2px 7px; border-radius: 10px; font: 800 10px/1.2 var(--font); letter-spacing: 0.12em; }
+.medal.gold { background: linear-gradient(180deg, #ffe28a, #d89a14); color: #3a2400; }
+.medal.silver { background: linear-gradient(180deg, #f2f6ff, #9aa8c4); color: #1d2840; }
+.medal.bronze { background: linear-gradient(180deg, #f0b98a, #a86428); color: #2e1704; }
+.medal.none { background: rgba(255, 255, 255, 0.08); color: #6f86a8; }
+.detail { max-width: min(640px, 92vw); min-height: 3.2em; font-size: 13px; line-height: 1.5; color: #bcd8f5; }
+.detail b { color: #fff; letter-spacing: 0.08em; }
+.detail .rt { color: #9fe8ff; font-size: 11px; letter-spacing: 0.1em; }
+.detail i { color: #ff9a6a; }
+button:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; transform: none; }
+.resname { margin: 0; font-size: 18px; letter-spacing: 0.2em; color: #ffd24a; }
+.resmedal { transform: scale(1.7); margin: 8px 0; }
+.bar { width: min(360px, 80vw); height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, #2fd6ff, #7dffb0); }
+.rows { list-style: none; margin: 0; padding: 12px 18px; min-width: min(420px, 90vw); background: rgba(8, 14, 36, 0.78); border: 1px solid rgba(55, 230, 255, 0.35); border-radius: 6px; }
+.rows li { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; font-size: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #bcd8f5; }
+.rows li b { color: #fff; }
+.rows li.cr b { color: var(--gold); }
+.credits { margin: 0; font-size: 16px; letter-spacing: 0.14em; color: #9fb7d8; }
+.credits b { color: var(--gold); font-size: 22px; }
+.shopwrap { display: flex; gap: 18px; align-items: flex-start; max-width: 96vw; }
+.shopmoss { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 150px; }
+.shopmoss canvas { background: rgba(30, 50, 90, 0.6); border: 2px solid #7dff9a; border-radius: 6px; width: 150px; height: 150px; }
+.shopmoss p { margin: 0; font-size: 12px; line-height: 1.4; color: #bcd8f5; text-align: left; }
+.shoplist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; width: min(520px, 62vw); max-height: 56vh; overflow-y: auto; }
+.shoplist li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 12px; background: rgba(8, 14, 36, 0.78); border: 1px solid rgba(55, 230, 255, 0.3); border-radius: 5px; text-align: left; }
+.shoplist .si { display: flex; flex-direction: column; gap: 3px; }
+.shoplist .si b { font-size: 13px; letter-spacing: 0.1em; color: #fff; }
+.shoplist .sd { font-size: 11px; color: #8fa6c8; }
+.pip { display: inline-block; width: 9px; height: 9px; margin-left: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.15); }
+.pip.on { background: #7dff9a; box-shadow: 0 0 6px rgba(125, 255, 154, 0.8); }
+.buy { min-width: 74px; padding: 9px 10px; font-size: 13px; }
+@media (max-height: 560px) {
+  .mapcard { width: 92px; padding: 5px 4px; }
+  #mapCols { gap: 16px; }
+  .detail { font-size: 11px; min-height: 2.6em; }
+  .resmedal { transform: none; }
+  .shopmoss { display: none; }
+  .shoplist { max-height: 44vh; width: min(620px, 92vw); }
+  .rows li { font-size: 13px; padding: 3px 0; }
+}
+#diff, #map, #results, #shop, #cont { background: radial-gradient(ellipse at center, rgba(3, 4, 13, 0.82), rgba(3, 4, 13, 0.94)); }
+.screen { justify-content: safe center; overflow-y: auto; }
+@media (max-height: 420px) {
+  h2 { font-size: 24px; margin: 0; }
+  .mapinfo { font-size: 11px; }
+  .board { padding: 2px; }
+  .mapcol { gap: 6px; }
+  .mapcard { width: 88px; padding: 4px 3px; gap: 2px; }
+  .menu.row button { padding: 9px 16px; }
+  .credits { font-size: 13px; } .credits b { font-size: 17px; }
+  .shoplist li { padding: 5px 10px; } .shoplist .sd { display: none; } .shoplist .si { flex-direction: row; align-items: center; gap: 12px; } .shoplist { max-height: 54vh; }
+}
