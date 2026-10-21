@@ -11,10 +11,10 @@
     s2b: { id: 's2b', n: 2, name: 'GLASSWATER REACH', theme: 'water', route: 'HARD ROUTE', hard: true, blurb: 'Skim the glass-flat sea through stone arches and gun batteries. Tidecaller guards the exit.', next: ['s3a', 's3b'], unlockHint: 'Earn a GOLD medal on Ember Canyon' },
     s3a: { id: 's3a', n: 3, name: 'FOUNDRY SPINE', theme: 'foundry', route: 'EASY ROUTE', blurb: 'Molten pipes, turrets and crushers. The Foundry Warden keeps the furnace lit.', next: ['s4'] },
     s3b: { id: 's3b', n: 3, name: 'GHOST STATION', theme: 'tunnel', route: 'HARD ROUTE', hard: true, blurb: 'A dead orbital station: tight corridors, bulkhead gates and a Prism Sentinel.', next: ['s4'], unlockHint: 'Earn a GOLD medal on stage 2' },
-    s4: { id: 's4', n: 4, name: 'NEBULA ARENA', theme: 'space', soon: true, blurb: 'All-range dogfight against the rival ace Scarlet Talon.', next: ['s5'] },
-    s5: { id: 's5', n: 5, name: 'GATEWYRM RUN', theme: 'space', soon: true, blurb: 'Ring gates in a warp lane and the serpent that guards them.', next: ['s6'] },
-    s6: { id: 's6', n: 6, name: "REGENT'S FLEET", theme: 'space', soon: true, blurb: 'All-range fleet assault on the carrier Hollow Queen.', next: ['s7'] },
-    s7: { id: 's7', n: 7, name: 'CROWN CORE', theme: 'space', soon: true, blurb: 'The Regent\'s flagship. End it.', next: [] },
+    s4: { id: 's4', n: 4, name: 'NEBULA ARENA', theme: 'arena', route: 'ALL-RANGE', blurb: 'Free flight: no rails, fighters on your tail, and the rival ace Scarlet Talon.', next: ['s5'] },
+    s5: { id: 's5', n: 5, name: 'GATEWYRM RUN', theme: 'warp', route: '', blurb: 'A warp lane of gold ring gates, and the mechanical serpent that guards them.', next: ['s6'] },
+    s6: { id: 's6', n: 6, name: "REGENT'S FLEET", theme: 'arena', route: 'ALL-RANGE', blurb: 'Strafe the Hollow Queen: knock out her shield turrets, then her hull.', next: ['s7'] },
+    s7: { id: 's7', n: 7, name: 'CROWN CORE', theme: 'fortress', route: 'FINAL', blurb: 'The Regent\'s flagship fortress. Three phases. End it.', next: [] },
   };
   CP.COLUMNS = [['s1'], ['s2a', 's2b'], ['s3a', 's3b'], ['s4'], ['s5'], ['s6'], ['s7']];
 
@@ -62,6 +62,10 @@
       case 's2b': return gold('s1');
       case 's3a': return any('s2a') || any('s2b');
       case 's3b': return gold('s2a') || gold('s2b');
+      case 's4': return any('s3a') || any('s3b');
+      case 's5': return any('s4');
+      case 's6': return any('s5');
+      case 's7': return any('s6');
       default: return false;
     }
   };

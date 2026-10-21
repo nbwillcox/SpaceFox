@@ -172,6 +172,7 @@
   /* ---------- the end of what is built so far ---------- */
   F.endCampaign = function () {
     A.music('title');
+    if (F.last === 's7') { UI.show('ending'); return; }
     UI.showGameOver(F.run.score, CP.STAGES[F.last].n, true, 'SECTOR CLEARED');
   };
 
@@ -206,6 +207,7 @@
     on('btnResHangar', F.shop);
     on('btnShopGo', F.afterShop);
     on('btnContYes', F.doContinue);
+    on('btnEndGo', () => UI.showGameOver(F.run.score, 7, true, 'VICTORY'));
     on('btnContNo', F.giveUp);
     const d = CP.save.diff || 'normal';
     document.querySelectorAll('.diffbtn').forEach((b) => b.classList.toggle('last', b.dataset.d === d));

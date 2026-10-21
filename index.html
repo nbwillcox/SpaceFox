@@ -13,8 +13,8 @@
   <title>SpaceFox</title>
   <meta name="description" content="SpaceFox - a free retro-style rail shooter: pilot the Firebrand through canyons and fleets, barrel-roll to deflect fire, lock on, boost and take down the Regent.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305071a'/%3E%3Cpath d='M16 4l5 9 7-4-3 14H7L4 9l7 4z' fill='%23ff7a2e'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%2337e6ff'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css?v=12">
-  <link rel="stylesheet" href="css/mobile.css?v=12">
+  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/mobile.css?v=21">
 </head>
 <body>
   <canvas id="game" aria-label="SpaceFox game screen"></canvas>
@@ -52,6 +52,7 @@
         <label class="check"><input id="setShake" type="checkbox"> Screen shake</label>
         <label class="check"><input id="setReduced" type="checkbox"> Reduced motion (fewer flashes &amp; particles)</label>
         <label>Comms chatter <select id="setComms"><option value="full">Full</option><option value="minimal">Warnings only</option><option value="off">Off</option></select></label>
+        <label class="check"><input id="setInvert" type="checkbox"> Invert pitch in all-range arenas (up = nose down)</label>
         <label class="check"><input id="setAuto" type="checkbox"> Rapid fire while FIRE is held (turns off charge lock-on)</label>
         <div class="keysec">
           <p class="keyhead">KEY BINDINGS <span id="keyNote">click a key, then press the new one (Esc cancels)</span></p>
@@ -120,6 +121,15 @@
       <div class="menu row"><button id="btnShopGo" class="primary">LAUNCH NEXT STAGE</button></div>
     </section>
 
+    <section id="ending" class="screen hidden">
+      <h2>THE REGENT FALLS</h2>
+      <p class="story">With the Crown Core silent, the Gloom Armada drifts dark across the Hearth Reach. One by one the mined worlds light up again.<br><br>
+      Captain Ember Vale lifts her goggles and watches the last fortress burn. <i>"Cinder Squadron, we are going home."</i><br><br>
+      Moss grins from the copilot seat. <i>"Told you the Firebrand purrs."</i></p>
+      <p class="credit2">SPACEFOX &middot; CINDER SQUADRON WILL RIDE AGAIN</p>
+      <div class="menu"><button id="btnEndGo" class="primary">CONTINUE</button></div>
+    </section>
+
     <section id="cont" class="screen hidden">
       <h2 class="over">CONTINUE?</h2>
       <p class="final">Retry this stage from the start with fresh retries.<br><b id="contLeft">1</b> continue(s) left.</p>
@@ -143,25 +153,26 @@
 
   <noscript><p style="color:#fff;padding:2rem">SpaceFox needs JavaScript enabled.</p></noscript>
 
-  <script src="js/util.js?v=12"></script>
-  <script src="js/config.js?v=12"></script>
-  <script src="assets/atlas.js?v=12"></script>
-  <script src="js/audio.js?v=12"></script>
-  <script src="js/gfx.js?v=12"></script>
-  <script src="js/fx.js?v=12"></script>
-  <script src="js/input.js?v=12"></script>
-  <script src="js/scores.js?v=12"></script>
-  <script src="js/sprites.js?v=12"></script>
-  <script src="js/comms.js?v=12"></script>
-  <script src="js/stages.js?v=12"></script>
-  <script src="js/campaign.js?v=12"></script>
-  <script src="js/game.js?v=12"></script>
-  <script src="js/render.js?v=12"></script>
-  <script src="js/hud.js?v=12"></script>
-  <script src="js/ui.js?v=12"></script>
-  <script src="js/flow.js?v=12"></script>
-  <script src="js/touchcfg.js?v=12"></script>
-  <script src="js/mobile.js?v=12"></script>
-  <script src="js/main.js?v=12"></script>
+  <script src="js/util.js?v=21"></script>
+  <script src="js/config.js?v=21"></script>
+  <script src="assets/atlas.js?v=21"></script>
+  <script src="js/audio.js?v=21"></script>
+  <script src="js/gfx.js?v=21"></script>
+  <script src="js/fx.js?v=21"></script>
+  <script src="js/input.js?v=21"></script>
+  <script src="js/scores.js?v=21"></script>
+  <script src="js/sprites.js?v=21"></script>
+  <script src="js/comms.js?v=21"></script>
+  <script src="js/stages.js?v=21"></script>
+  <script src="js/campaign.js?v=21"></script>
+  <script src="js/game.js?v=21"></script>
+  <script src="js/arena.js?v=21"></script>
+  <script src="js/render.js?v=21"></script>
+  <script src="js/hud.js?v=21"></script>
+  <script src="js/ui.js?v=21"></script>
+  <script src="js/flow.js?v=21"></script>
+  <script src="js/touchcfg.js?v=21"></script>
+  <script src="js/mobile.js?v=21"></script>
+  <script src="js/main.js?v=21"></script>
 </body>
 </html>

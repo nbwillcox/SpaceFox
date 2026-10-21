@@ -19,6 +19,9 @@
   const THEMES = {
     canyon: { img: 'bg', haze: HAZE, rock: ROCK, floor: ['#3fc9cf', '#1e93b0', '#0a4f7a'], band: '190,245,255', foam: '210,250,255', glint: [90, 110, 255], strata: 'dark', box: BOX_COL, wall: C.WALL },
     water: { img: 'tint', haze: [130, 160, 205], rock: [[120, 138, 168], [100, 122, 156], [136, 152, 180], [88, 108, 142]], floor: ['#5ee0d2', '#1fa6b8', '#0b5a86'], band: '200,250,255', foam: '225,252,255', glint: [120, 255, 230], strata: 'dark', box: [[104, 120, 150], [86, 140, 160], [150, 170, 200]], wall: 1050 },
+    arena: { haze: [10, 6, 30], box: [[90, 86, 120], [90, 86, 120], [90, 86, 120]] },
+    warp: { haze: [30, 10, 40], box: [[120, 90, 60], [120, 90, 60], [120, 90, 60]] },
+    fortress: { haze: [20, 6, 10], box: [[110, 60, 56], [140, 80, 60], [96, 70, 80]] },
     tunnel: { haze: [6, 8, 20], box: [[64, 78, 118], [86, 60, 124], [96, 108, 150]] },
     space: { haze: [10, 6, 30], box: [[90, 86, 120], [90, 86, 120], [90, 86, 120]] },
     foundry: { img: null, sky: ['#14070b', '#3a0f10', '#8a2a10'], haze: [120, 48, 34], rock: [[74, 62, 66], [88, 72, 70], [60, 54, 62], [100, 76, 66]], floor: ['#ffb03a', '#e0521a', '#7a1a0a'], band: '255,215,120', foam: '255,230,150', glint: [255, 130, 40], strata: 'glow', box: [[98, 84, 82], [140, 70, 50], [120, 100, 90]], wall: 820 },
@@ -111,12 +114,12 @@
 
   /* open space: nebula glow and a field of star streaks flying past */
   const STARS = (function () { const out = []; let a = 12345; const r = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; for (let i = 0; i < 170; i++) out.push({ x: (r() - 0.5) * 5200, y: (r() - 0.5) * 3000, z: r() * 3600, c: r() }); return out; })();
-  function backdropSpace(ctx, g) {
+  function backdropSpace(ctx, g, warp) {
     const W = C.W, H = C.H;
     const bgk = ctx.createLinearGradient(0, 0, 0, H);
-    bgk.addColorStop(0, '#07041a'); bgk.addColorStop(0.55, '#150a35'); bgk.addColorStop(1, '#0a0f2a');
+    if (warp) { bgk.addColorStop(0, '#12041a'); bgk.addColorStop(0.55, '#2a0f35'); bgk.addColorStop(1, '#1a0a1a'); } else { bgk.addColorStop(0, '#07041a'); bgk.addColorStop(0.55, '#150a35'); bgk.addColorStop(1, '#0a0f2a'); }
     ctx.fillStyle = bgk; ctx.fillRect(0, 0, W, H);
-    const blobs = [[0.22, 0.38, 380, 'rgba(160,60,220,0.28)'], [0.8, 0.3, 330, 'rgba(50,140,255,0.22)'], [0.5, 0.55, 460, 'rgba(255,80,140,0.14)']];
+    const blobs = warp ? [[0.22, 0.38, 380, 'rgba(255,170,60,0.26)'], [0.8, 0.3, 330, 'rgba(255,60,160,0.22)'], [0.5, 0.55, 460, 'rgba(160,60,255,0.2)']] : [[0.22, 0.38, 380, 'rgba(160,60,220,0.28)'], [0.8, 0.3, 330, 'rgba(50,140,255,0.22)'], [0.5, 0.55, 460, 'rgba(255,80,140,0.14)']];
     for (const [bx, by, br, col] of blobs) {
       const gx = bx * W - g.cam.x * 0.05, gy = by * H - g.cam.y * 0.04;
       const gr = ctx.createRadialGradient(gx, gy, 10, gx, gy, br); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)');
@@ -124,10 +127,10 @@
     }
     for (const st of STARS) {
       const z = ((st.z - g.dist * 0.9) % 3600 + 3600) % 3600;
-      const p = g.proj(st.x, st.y, z), q = g.proj(st.x, st.y, z + 70 + g.scroll * 0.08);
+      const p = g.proj(st.x, st.y, z), q = g.proj(st.x, st.y, z + (warp ? 260 : 70) + g.scroll * (warp ? 0.25 : 0.08));
       if (p.x < -20 || p.x > W + 20 || p.y < -20 || p.y > H + 20) continue;
       const a = clamp(1 - z / 3600, 0.08, 1);
-      ctx.strokeStyle = st.c > 0.8 ? 'rgba(160,220,255,' + a + ')' : st.c > 0.4 ? 'rgba(255,255,255,' + a + ')' : 'rgba(255,190,150,' + a + ')';
+      ctx.strokeStyle = warp ? (st.c > 0.6 ? 'rgba(255,210,110,' + a + ')' : 'rgba(255,120,220,' + a + ')') : st.c > 0.8 ? 'rgba(160,220,255,' + a + ')' : st.c > 0.4 ? 'rgba(255,255,255,' + a + ')' : 'rgba(255,190,150,' + a + ')';
       ctx.lineWidth = Math.max(0.8, 2.6 * p.s);
       ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
     }
@@ -135,7 +138,7 @@
 
   /* a dead station corridor: four lit panel planes closing in toward a dark far end */
   const TUN = { w: 720 };
-  function backdropTunnel(ctx, g) {
+  function backdropTunnel(ctx, g, fort) {
     const W = C.W, H = C.H, dist = g.dist, L = 120, wb = Math.floor(dist / L) * L, BLK = [6, 8, 20];
     ctx.fillStyle = '#05070f'; ctx.fillRect(0, 0, W, H);
     for (let i = 28; i >= 0; i--) {
@@ -144,8 +147,8 @@
       const za = Math.max(zA, -50), idx = Math.floor(zAbsA / L), fog = Math.pow(clamp(za / (C.ZFAR * 0.9), 0, 1), 1.1);
       const lit = idx % 5 === 0, hsh = hash(idx * 3);
       const planes = [
-        { n: 'floor', pts: [[-TUN.w, C.FLOOR], [TUN.w, C.FLOOR]], base: [34, 44, 72] },
-        { n: 'ceil', pts: [[-TUN.w, C.CEIL], [TUN.w, C.CEIL]], base: [28, 36, 62] },
+        { n: 'floor', pts: [[-TUN.w, C.FLOOR], [TUN.w, C.FLOOR]], base: fort ? [66, 36, 40] : [34, 44, 72] },
+        { n: 'ceil', pts: [[-TUN.w, C.CEIL], [TUN.w, C.CEIL]], base: fort ? [58, 30, 36] : [28, 36, 62] },
       ];
       for (const pl of planes) {
         const a = g.proj(pl.pts[0][0], pl.pts[0][1], za), b2 = g.proj(pl.pts[1][0], pl.pts[1][1], za), c2 = g.proj(pl.pts[1][0], pl.pts[1][1], zB), d2 = g.proj(pl.pts[0][0], pl.pts[0][1], zB);
@@ -153,7 +156,7 @@
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.closePath(); ctx.fill();
         /* centre light strip */
         const sa = g.proj(-60, pl.pts[0][1], za), sb = g.proj(60, pl.pts[0][1], za), sc = g.proj(60, pl.pts[0][1], zB), sd = g.proj(-60, pl.pts[0][1], zB);
-        ctx.fillStyle = lit ? mixc([120, 240, 255], BLK, fog) : mixc([40, 70, 110], BLK, fog);
+        ctx.fillStyle = lit ? mixc(fort ? [255, 110, 70] : [120, 240, 255], BLK, fog) : mixc(fort ? [90, 40, 44] : [40, 70, 110], BLK, fog);
         ctx.beginPath(); ctx.moveTo(sa.x, sa.y); ctx.lineTo(sb.x, sb.y); ctx.lineTo(sc.x, sc.y); ctx.lineTo(sd.x, sd.y); ctx.closePath(); ctx.fill();
       }
       for (let side = -1; side <= 1; side += 2) {
@@ -162,7 +165,7 @@
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y); ctx.closePath(); ctx.fill();
         /* window strip + frame lines */
         const w0 = g.proj(x, C.FLOOR + 190, za), w1 = g.proj(x, C.FLOOR + 330, za), w2 = g.proj(x, C.FLOOR + 330, zB), w3 = g.proj(x, C.FLOOR + 190, zB);
-        ctx.fillStyle = lit ? mixc([255, 120, 220], BLK, fog) : mixc([30, 40, 80], BLK, fog);
+        ctx.fillStyle = lit ? mixc(fort ? [255, 210, 90] : [255, 120, 220], BLK, fog) : mixc(fort ? [60, 30, 30] : [30, 40, 80], BLK, fog);
         ctx.beginPath(); ctx.moveTo(w0.x, w0.y); ctx.lineTo(w1.x, w1.y); ctx.lineTo(w2.x, w2.y); ctx.lineTo(w3.x, w3.y); ctx.closePath(); ctx.fill();
         ctx.strokeStyle = mixc([90, 120, 190], BLK, fog); ctx.lineWidth = Math.max(1, 2.5 * a.s);
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.stroke();
@@ -173,10 +176,51 @@
     ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
   }
 
+  /* the all-range arena: a sky sphere (nebulae, a gas giant and stars that turn with the ship) plus dust streaks that show speed */
+  function backdropArena(ctx, g) {
+    const W = C.W, H = C.H, A = G.arena;
+    const bgk = ctx.createLinearGradient(0, 0, 0, H);
+    bgk.addColorStop(0, '#05030f'); bgk.addColorStop(0.5, '#0d0824'); bgk.addColorStop(1, '#060a1c');
+    ctx.fillStyle = bgk; ctx.fillRect(0, 0, W, H);
+    const FOC = 620;
+    for (const o of A.sky) {
+      if (o.z < 0.04) continue;
+      const sx = C.VX + o.x / o.z * FOC, sy = C.VY - o.y / o.z * FOC;
+      if (o.k === 'n') {
+        const r = o.sz / Math.max(0.4, o.z) * 0.8;
+        if (sx < -r || sx > W + r || sy < -r || sy > H + r) continue;
+        const gr = ctx.createRadialGradient(sx, sy, 4, sx, sy, r); gr.addColorStop(0, o.col); gr.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gr; ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+      } else if (o.k === 'p') {
+        const r = o.sz / Math.max(0.5, o.z) * 0.9;
+        if (sx < -r || sx > W + r || sy < -r || sy > H + r) continue;
+        const gr = ctx.createRadialGradient(sx - r * 0.3, sy - r * 0.3, r * 0.1, sx, sy, r);
+        gr.addColorStop(0, '#ffd6a0'); gr.addColorStop(0.5, '#c8704a'); gr.addColorStop(1, '#3a1a2a');
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(sx, sy, r, 0, TAU); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,220,170,0.5)'; ctx.lineWidth = Math.max(2, r * 0.07);
+        ctx.beginPath(); ctx.ellipse(sx, sy, r * 1.7, r * 0.34, -0.35, 0, TAU); ctx.stroke();
+      } else {
+        if (sx < 0 || sx > W || sy < 0 || sy > H) continue;
+        ctx.fillStyle = o.c > 0.8 ? 'rgba(160,220,255,0.9)' : o.c > 0.4 ? 'rgba(255,255,255,0.85)' : 'rgba(255,200,160,0.8)';
+        const sz = o.c > 0.9 ? 2.4 : 1.4;
+        ctx.fillRect(sx, sy, sz, sz);
+      }
+    }
+    for (const d of A.dust) {
+      if (d.z < -100) continue;
+      const p = g.proj(d.x, d.y, d.z), q = g.proj(d.x, d.y, d.z + 60 + g.scroll * 0.06);
+      if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) continue;
+      const a = clamp(1 - d.z / 2400, 0.1, 0.9);
+      ctx.strokeStyle = 'rgba(190,220,255,' + a.toFixed(2) + ')'; ctx.lineWidth = Math.max(0.8, 2.2 * p.s);
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    }
+  }
+
   R.backdrop = function (ctx, g) {
     const t = (g.stage && g.stage.theme) || 'canyon';
-    if (t === 'space') backdropSpace(ctx, g);
-    else if (t === 'tunnel') backdropTunnel(ctx, g);
+    if (t === 'arena') backdropArena(ctx, g);
+    else if (t === 'space' || t === 'warp') backdropSpace(ctx, g, t === 'warp');
+    else if (t === 'tunnel' || t === 'fortress') backdropTunnel(ctx, g, t === 'fortress');
     else backdropCanyon(ctx, g, THEMES[t] || THEMES.canyon);
   };
 
@@ -220,8 +264,8 @@
     const q = g.proj(s.x, s.y, C.SHIP_Z), k = 0.62 * q.s;
     /* shadow on the water */
     const sh = g.proj(s.x, C.FLOOR, C.SHIP_Z), hgt = s.y - C.FLOOR;
-    if (g.stage.theme !== 'space') ctx.fillStyle = 'rgba(0,20,40,' + (0.38 * (1 - clamp(hgt / 520, 0, 0.8))).toFixed(2) + ')';
-    if (g.stage.theme !== 'space') { ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 70 * sh.s * (1 - clamp(hgt / 900, 0, 0.5)), 15 * sh.s, 0, 0, TAU); ctx.fill(); }
+    if (g.stage.theme !== 'space' && g.stage.theme !== 'arena' && g.stage.theme !== 'warp') ctx.fillStyle = 'rgba(0,20,40,' + (0.38 * (1 - clamp(hgt / 520, 0, 0.8))).toFixed(2) + ')';
+    if (g.stage.theme !== 'space' && g.stage.theme !== 'arena' && g.stage.theme !== 'warp') { ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 70 * sh.s * (1 - clamp(hgt / 900, 0, 0.5)), 15 * sh.s, 0, 0, TAU); ctx.fill(); }
     const fr = shipFrame(g);
     let alpha = 1;
     if (s.inv > 0 && s.rollT <= 0 && g.hurtT <= 0) alpha = ((g.t * 14) | 0) % 2 ? 0.4 : 1;
@@ -257,6 +301,7 @@
         case 'eshot': drawEShot(ctx, g, it.e); break;
         case 'pickup': drawPickup(ctx, g, it); break;
         case 'enemy': drawEnemy(ctx, g, it); break;
+        case 'ring': drawRing(ctx, g, it); break;
       }
     }
     G.fx.draw(ctx, g.proj);
@@ -336,18 +381,22 @@
     const spec = e.def || g.EN[e.kind], q = g.proj(e.x, e.y, e.z);
     if (e.z < -200) return;
     if (spec.proc) { drawRock(ctx, g, e, spec, q); return; }
+    if (spec.draw === 'queen') { drawQueen(ctx, g, e, spec, q); return; }
     const fa = clamp((C.ZFAR - e.z) / 500, 0, 1);
-    const atl = spec.atlas || 'enemy', k = (spec.w / SP.size(atl, spec.frame).w) * q.s;
+    const atl = spec.atlas || 'enemy', k = (spec.w / SP.size(atl === 'none' ? 'enemy' : atl, spec.frame).w) * q.s;
     let rot = 0;
-    if (e.boss) { rot = Math.sin(e.age * 0.6) * 0.035; drawBossShadow(ctx, g, e); }
+    if (e.boss) { rot = e.arena ? 0 : Math.sin(e.age * 0.6) * 0.035; if (!e.arena) drawBossShadow(ctx, g, e); }
     if (e.kind === 'fighter') rot = Math.cos(e.age * 2.2 + e.ph) * 0.28 * (e.amp > 100 ? 1 : 0.4);
     else if (e.kind === 'mine' || e.kind === 'crystal') rot = e.kind === 'mine' ? e.rot : Math.sin(e.rot) * 0.2;
+    else if (e.kind === 'amine') rot = e.rot;
+    else if (e.arena) rot = e.rotv || 0;
+    if (spec.glow) { ctx.globalCompositeOperation = 'lighter'; const rr = spec.w * 0.9 * q.s; ctx.globalAlpha = 0.5 * fa; ctx.drawImage(G.gfx.glow(spec.glow), q.x - rr, q.y - rr, rr * 2, rr * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
     SP.draw(ctx, atl, spec.frame, q.x, q.y, k, false, fa, rot);
     if (e.flash > 0) { ctx.globalCompositeOperation = 'lighter'; SP.draw(ctx, atl, spec.frame, q.x, q.y, k, false, 0.7 * fa, rot); ctx.globalCompositeOperation = 'source-over'; }
-    if (e.boss && e.def.furnace && e.phase === 2 && !e.dying) {                      /* the open furnace glows */
+    if (e.boss && e.def.core && e.phase >= e.def.core.phase && !e.dying) {                      /* the exposed core glows */
       const h = SP.size(atl, spec.frame).h * k, r = 150 * q.s * (1 + 0.1 * Math.sin(g.t * 9));
       ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.75;
-      ctx.drawImage(G.gfx.glow('rgba(255,150,50,1)'), q.x - 0.5 * r * 1.2 - 8 * q.s, q.y - h * 0.02 - r, r * 2.4, r * 2);
+      ctx.drawImage(G.gfx.glow(e.def.core.color), q.x - 0.5 * r * 1.2 - 8 * q.s, q.y - h * e.def.core.dy - r, r * 2.4, r * 2);
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     }
   }
@@ -429,6 +478,52 @@
     ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(e.rot || 0); ctx.globalAlpha = fa;
     ctx.drawImage(tex, -w / 2, -w / 2, w, w);
     if (e.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6 * fa; ctx.drawImage(tex, -w / 2, -w / 2, w, w); }
+    ctx.restore();
+  }
+  /* the Hollow Queen: a procedural capital ship, painted once */
+  let queenCv = null;
+  function queenTex() {
+    if (queenCv) return queenCv;
+    const W = 1100, H = 440, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d'); x.lineJoin = 'round';
+    /* engine glow behind the hull */
+    for (const ex of [-300, -150, 0, 150, 300]) { const g1 = x.createRadialGradient(W / 2 + ex, 300, 4, W / 2 + ex, 300, 70); g1.addColorStop(0, 'rgba(120,200,255,0.95)'); g1.addColorStop(1, 'rgba(60,120,255,0)'); x.fillStyle = g1; x.fillRect(W / 2 + ex - 70, 230, 140, 140); }
+    /* hull: a wide wedge with a raised command block */
+    const hull = x.createLinearGradient(0, 100, 0, 380); hull.addColorStop(0, '#5a6a8c'); hull.addColorStop(0.45, '#2c3550'); hull.addColorStop(1, '#10152a');
+    x.fillStyle = hull; x.strokeStyle = '#9fb4e0'; x.lineWidth = 3;
+    x.beginPath(); x.moveTo(40, 250); x.lineTo(250, 150); x.lineTo(430, 130); x.lineTo(470, 70); x.lineTo(630, 70); x.lineTo(670, 130); x.lineTo(850, 150); x.lineTo(1060, 250); x.lineTo(900, 330); x.lineTo(700, 370); x.lineTo(400, 370); x.lineTo(200, 330); x.closePath(); x.fill(); x.stroke();
+    /* command block and bridge */
+    x.fillStyle = '#3a4668'; x.beginPath(); x.moveTo(470, 70); x.lineTo(500, 30); x.lineTo(600, 30); x.lineTo(630, 70); x.closePath(); x.fill(); x.stroke();
+    x.fillStyle = '#ffd24a'; x.fillRect(520, 42, 60, 10);
+    /* hangar bays */
+    for (let i = 0; i < 7; i++) {
+      const bx = 230 + i * 96, by = 215 + Math.abs(i - 3) * 6;
+      const bg = x.createLinearGradient(bx, by, bx, by + 46); bg.addColorStop(0, '#ff5ad8'); bg.addColorStop(1, '#6a1a8a');
+      x.fillStyle = '#0a0a18'; x.fillRect(bx - 4, by - 4, 70, 54);
+      x.fillStyle = bg; x.fillRect(bx, by, 62, 46);
+      x.strokeStyle = 'rgba(255,200,255,0.6)'; x.lineWidth = 2; x.strokeRect(bx, by, 62, 46);
+    }
+    /* panel lines and running lights */
+    x.strokeStyle = 'rgba(160,190,240,0.35)'; x.lineWidth = 2;
+    for (let i = 0; i < 9; i++) { x.beginPath(); x.moveTo(150 + i * 100, 150 + Math.abs(i - 4) * 12); x.lineTo(120 + i * 108, 340); x.stroke(); }
+    for (let i = 0; i < 18; i++) { x.fillStyle = i % 3 ? '#7de8ff' : '#ff7a6a'; x.beginPath(); x.arc(70 + i * 56, 262 + Math.abs(i - 9) * -2 + (i < 3 || i > 14 ? 14 : 0), 4, 0, TAU); x.fill(); }
+    return (queenCv = c);
+  }
+  function drawQueen(ctx, g, e, spec, q) {
+    const fa = clamp((C.ZFAR - e.z) / 500, 0, 1), w = spec.w * q.s, tex = queenTex(), h = w * tex.height / tex.width;
+    if (e.shield) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.16 * fa + 0.05 * Math.sin(g.t * 6); ctx.drawImage(G.gfx.glow('rgba(110,190,255,1)'), q.x - w * 0.62, q.y - h * 0.9, w * 1.24, h * 1.8); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+    ctx.globalAlpha = fa; ctx.drawImage(tex, q.x - w / 2, q.y - h / 2, w, h);
+    if (e.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6 * fa; ctx.drawImage(tex, q.x - w / 2, q.y - h / 2, w, h); ctx.globalCompositeOperation = 'source-over'; }
+    ctx.globalAlpha = 1;
+  }
+  function drawRing(ctx, g, rg) {
+    if (rg.z < -150) return;
+    const q = g.proj(rg.x, rg.y, rg.z), r = rg.r * q.s, fa = clamp((C.ZFAR - rg.z) / 600, 0, 1);
+    ctx.save(); ctx.globalAlpha = fa * (rg.state === 1 ? 0.5 : rg.state === 2 ? 0.45 : 1);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = rg.state === 1 ? 'rgba(160,255,200,1)' : rg.state === 2 ? 'rgba(160,120,120,1)' : 'rgba(255,205,80,1)';
+    ctx.lineWidth = Math.max(2, 16 * q.s); ctx.beginPath(); ctx.arc(q.x, q.y, r * (rg.state === 1 ? 1.25 : 1), 0, TAU); ctx.stroke();
+    ctx.lineWidth = Math.max(1, 5 * q.s); ctx.strokeStyle = 'rgba(255,250,220,0.9)'; ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, TAU); ctx.stroke();
     ctx.restore();
   }
   function drawBossShadow(ctx, g, e) {

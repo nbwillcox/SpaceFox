@@ -4,7 +4,7 @@
   const S = G.settings, A = G.audio, U = G.U;
   const $ = (id) => document.getElementById(id);
   const UI = { cur: 'title', back: 'title', lastIdx: -1 };
-  const NAMES = ['title', 'pause', 'settings', 'scores', 'gameover', 'diff', 'map', 'results', 'shop', 'cont'];
+  const NAMES = ['title', 'pause', 'settings', 'scores', 'gameover', 'diff', 'map', 'results', 'shop', 'cont', 'ending'];
 
   UI.show = function (name) {
     NAMES.forEach((n) => $(n).classList.toggle('hidden', n !== name));
@@ -89,7 +89,7 @@
       $(id).addEventListener('input', (e) => { S[sliders[id]] = parseFloat(e.target.value); S.save(); A.applyVolumes(); });
       $(id).addEventListener('change', () => A.sfx.blip());
     }
-    const checks = { setBloom: 'bloom', setShake: 'shake', setReduced: 'reduced', setAuto: 'autofire' };
+    const checks = { setBloom: 'bloom', setShake: 'shake', setReduced: 'reduced', setAuto: 'autofire', setInvert: 'invertY' };
     for (const id in checks) {
       $(id).checked = !!S[checks[id]];
       $(id).addEventListener('change', (e) => { S[checks[id]] = e.target.checked; S.save(); A.sfx.blip(); });

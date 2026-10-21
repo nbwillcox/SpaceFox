@@ -155,3 +155,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; transform
   .credits { font-size: 13px; } .credits b { font-size: 17px; }
   .shoplist li { padding: 5px 10px; } .shoplist .sd { display: none; } .shoplist .si { flex-direction: row; align-items: center; gap: 12px; } .shoplist { max-height: 54vh; }
 }
+
+.story { max-width: min(560px, 90vw); font-size: 15px; line-height: 1.6; color: #cfe4ff; }
+.story i { color: #ffd24a; }
+.credit2 { margin: 0; letter-spacing: 0.3em; font-size: 11px; color: #7de8ff; }
+#ending { background: radial-gradient(ellipse at center, rgba(3, 4, 13, 0.7), rgba(3, 4, 13, 0.94)); }

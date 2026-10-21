@@ -75,6 +75,7 @@
     const pick = (arr) => arr[Math.floor(R() * arr.length)];
     const cl = (v, a, b) => (v < a ? a : v > b ? b : v);
     const P = {
+      rings: (d, t) => { let x = rr(-250, 250), y = rr(-20, 100); for (let i = 0; i < 6; i++) { ev.push({ d: d + i * 420, e: 'ring', x, y, r: 175 - t * 8 }); x = cl(x + rr(-190, 190), -380, 380); y = cl(y + rr(-70, 70), -100, 140); } return 3300; },
       stars: (d) => { const x = rr(-300, 200), y = rr(-20, 100); for (let i = 0; i < 5; i++) ev.push({ d: d + i * 150, e: 'pickup', kind: 'star', x: x + i * 90, y: y + i * 10 }); return 900; },
       fighters: (d, t) => { ev.push({ d, e: 'fighter', n: 3 + t + (R() * 2 | 0), pat: pick(['v', 'line', 'wave']), x: rr(-220, 220), y: rr(-20, 110) }); return 2400; },
       twin: (d, t) => { ev.push({ d, e: 'twin', x: rr(-250, 250), y: rr(20, 120) }); if (t > 0) ev.push({ d: d + 500, e: 'twin', x: rr(-250, 250), y: rr(20, 120) }); return 3000; },
@@ -106,6 +107,67 @@
 
   G.stages = {
 
+    s4: {
+      id: 's4', n: 4, name: 'NEBULA ARENA', theme: 'arena', mode: 'arena', length: 1, key: 6, boss: 'talon', events: [],
+      arena: {
+        R: 5200, boss: 'talon', bossT: 120,
+        waves: [{ t: 2, kind: 'afighter', n: 3 }, { t: 14, kind: 'afighter', n: 4 }, { t: 27, kind: 'atwin', n: 2 }, { t: 29, kind: 'afighter', n: 3 }, { t: 44, kind: 'afighter', n: 5 }, { t: 58, kind: 'atwin', n: 2 }, { t: 60, kind: 'afighter', n: 4 }],
+        pickups: [{ t: 6, kind: 'star' }, { t: 7, kind: 'star' }, { t: 8, kind: 'star' }, { t: 19, kind: 'bomb' }, { t: 24, kind: 'star' }, { t: 25, kind: 'star' }, { t: 33, kind: 'repair' }, { t: 41, kind: 'laser' }, { t: 47, kind: 'star' }, { t: 48, kind: 'star' }, { t: 52, kind: 'bomb' }, { t: 64, kind: 'repair' }, { t: 72, kind: 'shield' }],
+      },
+      comms: [
+        { d: 400, who: 'moss', expr: 'calm', text: 'Open space, Captain! No rails here. Left and right turn the ship, up and down pitch the nose.' },
+        { d: 4500, who: 'vale', expr: 'cool', text: 'The scanner ring in the corner shows every contact. Straight ahead is the top.' },
+        { d: 12000, who: 'moss', expr: 'nervous', text: 'Some are on your tail! Turn hard, or roll to throw their shots back.' },
+        { d: 36000, who: 'vale', expr: 'smirk', text: 'They keep coming. Keep your shield topped up.' },
+        { d: 70000, who: 'moss', expr: 'worry', text: 'Captain... one signature just lit up the whole scanner.' },
+      ],
+      bossWarn: [{ who: 'moss', expr: 'gasp', text: 'That crimson streak is Scarlet Talon, the Regent\'s best ace!', pri: 2 }, { who: 'vale', expr: 'smug', text: 'I have been waiting for a rematch. Stay on his tail, Moss.', pri: 1 }],
+      victory: [{ who: 'vale', expr: 'warm', text: 'Talon is down. Not a scratch on my paint.', pri: 2 }, { who: 'moss', expr: 'laugh', text: 'And not a scratch on mine either!', pri: 1 }],
+    },
+    s5: {
+      id: 's5', n: 5, name: 'GATEWYRM RUN', theme: 'warp', length: 100000, bossAt: 92000, boss: 'gatewyrm', key: 8,
+      events: compose({ seed: 5555, bossAt: 92000, gap: 0.95, opening: ['stars', 'rings', 'fighters'],
+        deck: [['rings', 'fighters', 'twin', 'rings', 'mines', 'crystal'], ['rings', 'fighters', 'twin', 'crystal', 'rings', 'gunship', 'mines'], ['rings', 'rings', 'fighters', 'twin', 'crystal', 'gunship', 'mines']],
+        pickups: [{ d: 8000, kind: 'laser', x: 0, y: 40 }, { d: 22000, kind: 'bomb', x: 90, y: 30 }, { d: 34000, kind: 'repair', x: -80, y: 40 }, { d: 48000, kind: 'laser', x: 50, y: 60 }, { d: 60000, kind: 'bomb', x: -80, y: 30 }, { d: 72000, kind: 'repair', x: 70, y: 40 }, { d: 82000, kind: 'shield', x: 0, y: 30 }] }),
+      comms: [
+        { d: 400, who: 'moss', expr: 'happy', text: 'Warp lane! Fly through the gold rings for bonus points, and every fifth one tops up your shield.' },
+        { d: 6000, who: 'vale', expr: 'cool', text: 'Chain them. A miss breaks the chain.' },
+        { d: 30000, who: 'moss', expr: 'nervous', text: 'The lane is full of Gloom fighters. Guns up, Captain!' },
+        { d: 80000, who: 'moss', expr: 'worry', text: 'The rings ahead are coiled around something very big and very alive.' },
+      ],
+      bossWarn: [{ who: 'moss', expr: 'gasp', text: 'The Gatewyrm! A mechanical serpent wrapped around the gates!', pri: 2 }, { who: 'vale', expr: 'fierce', text: 'Shoot the head. Dodge the coils.', pri: 1 }],
+      victory: [{ who: 'vale', expr: 'smirk', text: 'The gate is open. Only the fleet stands between us and the Regent.', pri: 2 }, { who: 'moss', expr: 'cheer', text: 'Hangar time, Captain!', pri: 1 }],
+    },
+    s6: {
+      id: 's6', n: 6, name: "REGENT'S FLEET", theme: 'arena', mode: 'arena', length: 1, key: 9, boss: 'queen', events: [],
+      arena: {
+        R: 6200, carrier: true, boss: 'queen',
+        waves: [],
+        pickups: [{ t: 8, kind: 'star' }, { t: 9, kind: 'star' }, { t: 16, kind: 'repair' }, { t: 28, kind: 'bomb' }, { t: 36, kind: 'star' }, { t: 37, kind: 'star' }, { t: 46, kind: 'laser' }, { t: 58, kind: 'repair' }, { t: 70, kind: 'bomb' }, { t: 82, kind: 'repair' }, { t: 95, kind: 'shield' }, { t: 108, kind: 'bomb' }, { t: 120, kind: 'repair' }],
+      },
+      comms: [
+        { d: 500, who: 'moss', expr: 'gasp', text: 'There she is - the Hollow Queen, the Regent\'s flagship carrier!' },
+        { d: 4000, who: 'vale', expr: 'cool', text: 'Her shield is projected by four turrets. Take them out first.' },
+        { d: 14000, who: 'moss', expr: 'nervous', text: 'Fighters are launching from her hangars! Do not stop moving!' },
+        { d: 50000, who: 'vale', expr: 'fierce', text: 'Keep circling. Strafe the turrets, then the hull.' },
+      ],
+      bossWarn: [],
+      victory: [{ who: 'vale', expr: 'warm', text: 'The Hollow Queen is hollow no more. One last jump, Cinder Squadron.', pri: 2 }, { who: 'moss', expr: 'cheer', text: 'To the hangar, then to the Crown Core!', pri: 1 }],
+    },
+    s7: {
+      id: 's7', n: 7, name: 'CROWN CORE', theme: 'fortress', length: 110000, bossAt: 100000, boss: 'crown', key: 10,
+      events: compose({ seed: 7070, bossAt: 100000, gap: 0.9, tierBoost: 1, opening: ['stars', 'gate', 'fighters'],
+        deck: [['gate', 'fighters', 'twin', 'crystal', 'mines', 'gunship', 'gate'], ['gate', 'fighters', 'twin', 'crystal', 'mines', 'gunship', 'gate', 'gate'], ['gate', 'gate', 'twin', 'crystal', 'gunship', 'gunship', 'mines', 'fighters']],
+        pickups: [{ d: 8000, kind: 'laser', x: 0, y: 40 }, { d: 20000, kind: 'bomb', x: 90, y: 30 }, { d: 32000, kind: 'repair', x: -80, y: 40 }, { d: 46000, kind: 'laser', x: 50, y: 60 }, { d: 58000, kind: 'bomb', x: -80, y: 30 }, { d: 68000, kind: 'repair', x: 70, y: 40 }, { d: 78000, kind: 'life', x: 0, y: 50 }, { d: 88000, kind: 'shield', x: 0, y: 30 }, { d: 94000, kind: 'bomb', x: 60, y: 30 }] }),
+      comms: [
+        { d: 400, who: 'vale', expr: 'fierce', text: 'This is it, Cinder Squadron. The Crown Core.' },
+        { d: 6000, who: 'moss', expr: 'nervous', text: 'The fortress corridors are lit like a furnace. Mind the gates!' },
+        { d: 40000, who: 'moss', expr: 'worry', text: 'Gunships and crystals on every deck. The Regent knows we are coming.' },
+        { d: 90000, who: 'vale', expr: 'cool', text: 'Whatever is waiting at the end, we finish it together.' },
+      ],
+      bossWarn: [{ who: 'moss', expr: 'gasp', text: 'The Crown Core! The Regent\'s own war machine - six claws and a shield ring!', pri: 2 }, { who: 'vale', expr: 'shout', text: 'Lock on and roll through everything it throws. For the Reach!', pri: 1 }],
+      victory: [{ who: 'vale', expr: 'laugh', text: 'The Regent is finished. Hearth Reach is free.', pri: 2 }, { who: 'moss', expr: 'cheer', text: 'Told you the Firebrand purrs, Captain!', pri: 1 }],
+    },
     s2a: {
       id: 's2a', n: 2, name: 'DRIFT BELT', theme: 'space', length: 90000, bossAt: 82000, boss: 'rockjaw', key: 2,
       events: compose({ seed: 4242, bossAt: 82000, gap: 1.05, opening: ['stars', 'fighters', 'rocks'],
