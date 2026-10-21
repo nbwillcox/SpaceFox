@@ -34,6 +34,46 @@ def label(mask):
     return lab, n
 
 
+def component_frames(im, n=6, rows=2, dil=3, min_area=800):
+    """Frames that do not overlap are separated by connected-component analysis instead of straight cuts, so no wingtip is ever clipped or leaks into its neighbour.
+       Components that touch (e.g. a glow outline) are split at their quietest column."""
+    from PIL import ImageFilter
+    a = np.array(im)[:, :, 3]
+    H, W = a.shape
+    out = []
+    for r in range(rows):
+        y0, y1 = r * H // rows, (r + 1) * H // rows
+        band = a[y0:y1] > 12
+        grown = np.array(Image.fromarray((band * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(dil))) > 0
+        lab, cnt = label(grown)
+        sizes = np.bincount(lab.ravel(), minlength=cnt + 1)
+        comps = []
+        for k in range(1, cnt + 1):
+            if sizes[k] < min_area: continue
+            ys, xs = np.nonzero(lab == k)
+            comps.append({'mask': lab == k, 'cx': xs.mean(), 'w': xs.max() - xs.min()})
+        while len(comps) < n:                                   # split the widest merged component at its quietest column
+            c = max(comps, key=lambda c: c['w'])
+            colsum = (band & c['mask']).sum(axis=0)
+            xs = np.nonzero(c['mask'].any(axis=0))[0]
+            mid = (xs.min() + xs.max()) // 2
+            lo, hi = mid - 45, mid + 45
+            cut = lo + int(np.argmin(colsum[lo:hi]))
+            left = c['mask'].copy(); left[:, cut:] = False
+            right = c['mask'].copy(); right[:, :cut] = False
+            comps.remove(c)
+            for m in (left, right):
+                ys2, xs2 = np.nonzero(m)
+                comps.append({'mask': m, 'cx': xs2.mean(), 'w': xs2.max() - xs2.min()})
+        comps = sorted(comps, key=lambda c: c['cx'])[:n]
+        band_im = np.array(im)[y0:y1].copy()
+        for c in comps:
+            arr = band_im.copy()
+            arr[~c['mask']] = 0                                  # only this frame's pixels
+            out.append(Image.fromarray(arr))
+    return out
+
+
 def cuts(alpha, n, lo=20):
     """n+1 cut positions along axis 1 of alpha (rows x cols), each slid to the least occupied column near its nominal spot"""
     W = alpha.shape[1]
@@ -123,7 +163,13 @@ def main():
         a = np.array(im)[:, :, 3]
         rows = [0, H // 2, H]
         frames = []
-        for r in range(2):
+        if name in ('ship', 'enemy'):
+            for cell in component_frames(im):
+                ca = np.array(cell)[:, :, 3]
+                ys, xs = np.where(ca > 12)
+                spr = cell.crop((max(0, xs.min() - pad), max(0, ys.min() - pad), min(cell.width, xs.max() + 1 + pad), min(cell.height, ys.max() + 1 + pad)))
+                frames.append(spr.resize((max(1, round(spr.width * scale)), max(1, round(spr.height * scale))), Image.LANCZOS))
+        for r in range(0 if name in ('ship', 'enemy') else 0, 0 if name in ('ship', 'enemy') else 2):
             band = a[rows[r]:rows[r + 1]]
             cx = cuts(band, 6)
             for c in range(6):

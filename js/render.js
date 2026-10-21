@@ -234,7 +234,8 @@
     if (s.rollT > 0) { rk = clamp(1 - s.rollT / (s.rollDur || 0.75), 0, 1); const e = rk * rk * (3 - 2 * rk); ang = s.rollDir * e * Math.PI * 4; }
     ctx.globalCompositeOperation = 'lighter';
     const eg = s.boosting ? 1 : 0.55, ca = Math.cos(ang), sa = Math.sin(ang);
-    for (const ex of [-0.19, 0.19]) {
+    const bankedFrame = fr.f >= 1 && fr.f <= 4;                /* banked frames already glow: an overlay at fixed offsets would drift off the engines */
+    for (const ex of (bankedFrame ? [] : [-0.19, 0.19])) {
       const ox = ex * 274 * k, oy = 8 * k, rx = ox * ca - oy * sa, ry = ox * sa + oy * ca;
       ctx.globalAlpha = 0.55 * eg * alpha; ctx.drawImage(G.gfx.glow('rgba(80,200,255,1)'), q.x + rx - 40 * k * 2.2, q.y + ry - 40 * k * 2.2, 80 * k * 2.2, 80 * k * 2.2);
     }
