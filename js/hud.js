@@ -77,11 +77,22 @@
     for (let i = 0; i < Math.max(0, g.retries); i++) G.sprites.draw(ctx, 'ship', 0, rx - 10 - i * 32, 36, 0.12);
     txt(ctx, 'LASER ' + ['I', 'II', 'III'][g.tier - 1] + '   BOMBS ' + g.bombs, rx, 64, 12, '#ff9a6a', 'right', 800);
     /* stage progress */
-    const f = U.clamp(g.dist / g.stage.length, 0, 1);
+    const f = U.clamp(g.dist / (g.stage.bossAt || g.stage.length), 0, 1);
     ctx.fillStyle = 'rgba(0,10,30,0.6)'; ctx.fillRect(W / 2 - 150, H - 20, 300, 6);
     ctx.fillStyle = '#7de8ff'; ctx.fillRect(W / 2 - 150, H - 20, 300 * f, 6);
     ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.moveTo(W / 2 - 150 + 300 * f, H - 25); ctx.lineTo(W / 2 - 150 + 300 * f + 5, H - 19); ctx.lineTo(W / 2 - 150 + 300 * f - 5, H - 19); ctx.fill();
     txt(ctx, 'STAGE ' + g.stage.n + '  ' + g.stage.name, W / 2, H - 28, 11, '#9fb7d8', 'center', 800);
+    if (g.boss && !g.boss.dying && g.boss.state !== 'enter' || g.boss && g.boss.dying) {
+      const b = g.boss, bw = 420, bx = W / 2 - bw / 2, by = 84;
+      txt(ctx, b.name, W / 2, by - 4, 12, '#ffb08a', 'center', 800);
+      ctx.fillStyle = 'rgba(0,10,30,0.7)'; ctx.fillRect(bx - 2, by, bw + 4, 12);
+      const gr = ctx.createLinearGradient(bx, 0, bx + bw, 0); gr.addColorStop(0, b.phase === 1 ? '#a8b4c8' : '#ff5a3a'); gr.addColorStop(1, b.phase === 1 ? '#e6eefc' : '#ffb347');
+      ctx.fillStyle = gr; ctx.fillRect(bx, by + 2, bw * U.clamp(b.hp / b.maxHp, 0, 1), 8);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(bx + bw / 2 - 1, by - 1, 2, 14);
+      ctx.strokeStyle = 'rgba(255,170,130,0.6)'; ctx.lineWidth = 1.2; ctx.strokeRect(bx - 2, by, bw + 4, 12);
+      if (b.phase === 1 && !b.dying) txt(ctx, 'ARMORED: USE LOCK-ON OR DEFLECT', W / 2, by + 26, 10, '#9fb7d8', 'center', 800);
+    }
+    G.comms.draw(ctx, 20, 130);
     if (g.msg) {
       const m = g.msg, k = m.t / m.dur, a = k < 0.1 ? k / 0.1 : k > 0.8 ? Math.max(0, (1 - k) / 0.2) : 1;
       ctx.globalAlpha = a;

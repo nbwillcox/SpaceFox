@@ -4,7 +4,7 @@ A free, retro-flavored on-rails space shooter with neon-meets-painted art: pilot
 
 **Play it in your browser:** https://nbwillcox.github.io/SpaceFox/
 
-Work in progress (milestone 2: weapons). See `DESIGN.md` for the full plan.
+Work in progress (milestone 3: first boss and radio chatter). See `DESIGN.md` for the full plan.
 
 ## Controls
 
@@ -18,6 +18,8 @@ Work in progress (milestone 2: weapons). See `DESIGN.md` for the full plan.
 | Pause | `P` or `Esc` |
 
 Pickups: laser upgrades (twin, then hyper), bombs, repair, overshield, boost refill, extra retries and stars. Settings has *Rapid fire while FIRE is held* (default on for phones) if you prefer holding to charging.
+
+Stage 1 ends with the **Bulwark**, an armored walking fortress: plain lasers barely scratch it (lock-on volleys, deflected mortars and bombs do full damage), it telegraphs claw swipes with a red lane on the water, and once half its armor is gone the furnace core opens. Moss and Captain Vale chatter over the radio with typed text and a babble voice (Settings > Comms chatter: full / warnings only / off).
 
 All of these can be changed in **Settings > Key bindings**.
 

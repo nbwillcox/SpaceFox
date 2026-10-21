@@ -15,7 +15,7 @@
     const R = rng(1977), ev = [];
     const rr = (a, b) => a + R() * (b - a);
     const pick = (arr) => arr[Math.floor(R() * arr.length)];
-    const LEN = 100000;
+    const LEN = 100000, BOSS_AT = 91000;
     /* helpers that push one pattern at distance d */
     const stars = (d, x, y, n, dx, dy) => { for (let i = 0; i < n; i++) ev.push({ d: d + i * 150, e: 'pickup', kind: 'star', x: x + dx * i, y: y + dy * i }); };
     const fighters = (d, n, pat) => ev.push({ d, e: 'fighter', n, pat, x: rr(-220, 220), y: rr(-20, 110) });
@@ -38,7 +38,7 @@
     fighters(11000, 5, 'v');
 
     let d = 13500;
-    while (d < LEN - 6000) {
+    while (d < BOSS_AT - 7000) {
       const f = d / LEN, tier = f < 0.3 ? 0 : f < 0.65 ? 1 : 2;
       const deck = [
         () => { fighters(d, 3 + tier + (R() * 2 | 0), pick(['v', 'line', 'wave'])); return 2600; },
@@ -69,6 +69,19 @@
   }
 
   G.stages = {
-    1: { n: 1, name: 'EMBER CANYON', length: 100000, key: 0, events: stage1() },
+    1: {
+      n: 1, name: 'EMBER CANYON', length: 100000, bossAt: 91000, bossName: 'BULWARK', key: 0, events: stage1(),
+      comms: [
+        { d: 300, who: 'moss', expr: 'happy', text: 'All systems green, Captain! The Firebrand is purring like a space-kitten.' },
+        { d: 1700, who: 'vale', expr: 'smirk', text: 'Keep the jokes on the channel, Moss. Eyes on the canyon.' },
+        { d: 3300, who: 'moss', expr: 'calm', text: 'Fighters ahead! Tap fire to shoot. Hold it to charge and lock on.' },
+        { d: 8200, who: 'moss', expr: 'nervous', text: 'Pillars! Weave through them, Captain!' },
+        { d: 15500, who: 'moss', expr: 'grin', text: 'Barrel roll with Q or E, or double-tap a side. It bats enemy shots right back!' },
+        { d: 23000, who: 'moss', expr: 'cheer', text: 'Grab the stars and canisters! Upgrades and repairs, free of charge.' },
+        { d: 48000, who: 'moss', expr: 'shock', text: 'Heavy armor on the scanners. Use lock-on volleys on the big ones!' },
+        { d: 72000, who: 'vale', expr: 'fierce', text: 'The Regent is mining this whole reach. We end it here.' },
+        { d: 84000, who: 'moss', expr: 'worry', text: 'Captain... the canyon walls are opening up. Something big is waiting.' },
+      ],
+    },
   };
 })((window.SGS = window.SGS || {}));

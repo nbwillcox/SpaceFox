@@ -85,6 +85,15 @@
   X.bomb = () => { noise({ f0: 1400, f1: 40, dur: 1.4, vol: 0.55 }); tone({ type: 'sine', f0: 200, f1: 24, dur: 1.2, vol: 0.5 }); tone({ type: 'sawtooth', f0: 1600, f1: 80, dur: 0.7, vol: 0.12 }); };
   X.weaponUp = () => { tone({ type: 'triangle', f0: 260, f1: 1300, dur: 0.3, vol: 0.16 }); [659, 880, 1175, 1568].forEach((f, i) => tone({ type: 'square', f0: f, dur: 0.1, vol: 0.08, delay: 0.12 + i * 0.05 })); };
   X.bonus = (n) => { if (gate('bonus', 60)) tone({ type: 'square', f0: 700 + (n || 0) * 80, dur: 0.08, vol: 0.08 }); };
+  X.armor = () => { if (gate('armor', 50)) { tone({ type: 'square', f0: 1500, f1: 1200, dur: 0.04, vol: 0.05 }); tone({ type: 'triangle', f0: 260, f1: 200, dur: 0.05, vol: 0.07 }); } };
+  /* babble voices: one short blip per typed letter, pitch wobbling with the letter */
+  X.babble = (who, ch) => {
+    if (!gate('babble', 38)) return;
+    const n = ch.toLowerCase().charCodeAt(0) % 9;
+    if (who === 'moss') { const f = 150 + n * 22; tone({ type: 'sawtooth', f0: f * 1.25, f1: f * 0.8, dur: 0.07, vol: 0.05 }); tone({ type: 'square', f0: f * 2.1, f1: f * 1.4, dur: 0.04, vol: 0.02 }); }
+    else if (who === 'vale') { const f = 330 + n * 28; tone({ type: 'triangle', f0: f, f1: f * 1.06, dur: 0.07, vol: 0.07 }); }
+    else { const f = 260 + n * 30; tone({ type: 'square', f0: f, f1: f * 0.9, dur: 0.06, vol: 0.04 }); }
+  };
   X.hit = () => { if (gate('hit', 30)) tone({ type: 'square', f0: 380, f1: 200, dur: 0.04, vol: 0.06 }); };
   X.boom = (size) => {
     size = size || 1;
@@ -154,7 +163,7 @@
   const freq = (root, semis) => root * Math.pow(2, semis / 12);
   function schedStep(t, s) {
     const bar = (s >> 4) & 3, st = s & 15, root = freq(55, PROG[bar] + 4 + M.key), sx = 60 / M.tempo / 4;
-    const play = M.mode === 'play';
+    const play = M.mode !== 'title';
     if (BASS[st] >= 0) tone({ type: 'sawtooth', f0: freq(root, BASS[st]), dur: sx * 1.7, vol: 0.14, bus: L.bass, at: t });
     if (play || st % 2 === 0) tone({ type: 'square', f0: freq(root * 4, ARP[st]), dur: sx * 0.85, vol: play ? 0.05 : 0.04, bus: L.arp, at: t });
     if (play && LEAD[st] >= 0) tone({ type: 'triangle', f0: freq(root * 4, LEAD[st]), dur: sx * 2, vol: 0.09, bus: L.lead, attack: 0.01, at: t });
@@ -178,7 +187,7 @@
     if (!A.ready) return;
     if (mode === 'off') { M.on = false; return; }
     M.mode = mode; M.key = key || 0;
-    M.tempo = mode === 'title' ? 108 : 132;
+    M.tempo = mode === 'title' ? 108 : mode === 'boss' ? 150 : 132;
     if (!M.on) {
       M.on = true; M.step = 0; M.next = A.ctx.currentTime + 0.08;
       if (!M.timer) M.timer = setInterval(scheduler, 30);

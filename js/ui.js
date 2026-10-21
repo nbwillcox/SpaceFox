@@ -80,6 +80,8 @@
     $('goName').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3); });
     $('goName').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveScore(); } });
 
+    $('setComms').value = S.comms;
+    $('setComms').addEventListener('change', (e) => { S.comms = e.target.value; S.save(); A.sfx.blip(); });
     const sliders = { setMaster: 'master', setMusic: 'music', setSfx: 'sfx' };
     for (const id in sliders) {
       $(id).value = S[sliders[id]];

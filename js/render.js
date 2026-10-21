@@ -132,6 +132,7 @@
   /* ---------- scene ---------- */
   R.scene = function (ctx, g) {
     if (!g.ship) return;
+    drawLane(ctx, g);
     const list = [];
     for (const e of g.ents) list.push(e);
     for (const e of g.eshots) list.push({ t: 'eshot', z: e.z, e });
@@ -229,12 +230,19 @@
     const spec = g.EN[e.kind], q = g.proj(e.x, e.y, e.z);
     if (e.z < -200) return;
     const fa = clamp((C.ZFAR - e.z) / 500, 0, 1);
-    const k = (spec.w / SP.size('enemy', spec.frame).w) * q.s;
+    const atl = spec.atlas || 'enemy', k = (spec.w / SP.size(atl, spec.frame).w) * q.s;
     let rot = 0;
+    if (e.boss) { rot = Math.sin(e.age * 0.6) * 0.035; drawBossShadow(ctx, g, e); }
     if (e.kind === 'fighter') rot = Math.cos(e.age * 2.2 + e.ph) * 0.28 * (e.amp > 100 ? 1 : 0.4);
     else if (e.kind === 'mine' || e.kind === 'crystal') rot = e.kind === 'mine' ? e.rot : Math.sin(e.rot) * 0.2;
-    SP.draw(ctx, 'enemy', spec.frame, q.x, q.y, k, false, fa, rot);
-    if (e.flash > 0) { ctx.globalCompositeOperation = 'lighter'; SP.draw(ctx, 'enemy', spec.frame, q.x, q.y, k, false, 0.7 * fa, rot); ctx.globalCompositeOperation = 'source-over'; }
+    SP.draw(ctx, atl, spec.frame, q.x, q.y, k, false, fa, rot);
+    if (e.flash > 0) { ctx.globalCompositeOperation = 'lighter'; SP.draw(ctx, atl, spec.frame, q.x, q.y, k, false, 0.7 * fa, rot); ctx.globalCompositeOperation = 'source-over'; }
+    if (e.boss && e.phase === 2 && !e.dying) {                      /* the open furnace glows */
+      const h = SP.size(atl, spec.frame).h * k, r = 150 * q.s * (1 + 0.1 * Math.sin(g.t * 9));
+      ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.75;
+      ctx.drawImage(G.gfx.glow('rgba(255,150,50,1)'), q.x - 0.5 * r * 1.2 - 8 * q.s, q.y - h * 0.02 - r, r * 2.4, r * 2);
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    }
   }
   function drawMissile(ctx, g, m) {
     const p = g.proj(m.x, m.y, m.z), q = g.proj(m.x, m.y, Math.max(-100, m.z - 260)), r = 38 * p.s;
@@ -285,6 +293,24 @@
     ctx.beginPath(); ctx.arc(q.x, q.y, 60 + k * 900, 0, TAU); ctx.stroke();
     ctx.strokeStyle = 'rgba(255,150,60,1)'; ctx.lineWidth = 8 * (1 - k) + 1;
     ctx.beginPath(); ctx.arc(q.x, q.y, 30 + k * 640, 0, TAU); ctx.stroke();
+    ctx.restore();
+  }
+  function drawBossShadow(ctx, g, e) {
+    const q = g.proj(e.x, C.FLOOR, e.z);
+    ctx.fillStyle = 'rgba(0,20,40,0.35)';
+    ctx.beginPath(); ctx.ellipse(q.x, q.y, 330 * q.s, 55 * q.s, 0, 0, TAU); ctx.fill();
+  }
+  function drawLane(ctx, g) {
+    const b = g.boss;
+    if (!b || !b.tele) return;
+    const side = b.tele.side, x0 = side < 0 ? -1200 : -60, x1 = side < 0 ? 60 : 1200, t = b.tele.t;
+    const pts = [g.proj(x0, C.FLOOR + 3, -60), g.proj(x1, C.FLOOR + 3, -60), g.proj(x1, C.FLOOR + 3, 1700), g.proj(x0, C.FLOOR + 3, 1700)];
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,50,40,' + (0.26 + 0.14 * Math.sin(t * 15)).toFixed(2) + ')';
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,120,90,0.8)'; ctx.lineWidth = 3;
+    const a = g.proj(side < 0 ? 60 : -60, C.FLOOR + 3, -60), b2 = g.proj(side < 0 ? 60 : -60, C.FLOOR + 3, 1700);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.stroke();
     ctx.restore();
   }
   function drawReticle(ctx, g) {
