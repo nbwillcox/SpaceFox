@@ -12,7 +12,7 @@ The campaign is complete (milestone 5): seven stages, a route map with a hard br
 | --- | --- |
 | Steer | Mouse (move the pointer), `W A S D` or the arrow keys |
 | Fire | Left click or `Space`: tap for a shot, **hold to charge**, sweep up to 3 lock-ons, release for a homing volley (no target: a charged blast) |
-| Barrel roll | Right click, `Q` / `E`, or double-tap left / right: **deflects enemy shots back** at them while you spin |
+| Barrel roll | Right click, `Q` / `E`, or double-tap left / right: **deflects enemy shots back** at them while you spin: two full turns of the ship with a sideways dash and a deflect bubble |
 | Boost / brake | `Shift` / `Ctrl` |
 | Bomb | `B` |
 | Pause | `P` or `Esc` |
@@ -42,3 +42,5 @@ All of these can be changed in **Settings > Key bindings**.
 
 Play in landscape. A floating stick on the left steers the ship; on the right, **FIRE** (hold) shoots, the two **ROLL** buttons barrel-roll left or right to deflect shots, and **BOOST**, **BRAKE** and **BOMB** sit above them. The pause button opens the menu. The on-screen controls appear on touch devices automatically; Settings has size, opacity and a left-handed layout. Use your browser's *Add to Home Screen* to install it as a full-screen app.
 
+
+The mouse is locked to the game while you fly so a stray click cannot leave the window; press `Esc` to release it (the game pauses).

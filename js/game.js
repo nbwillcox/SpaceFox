@@ -40,7 +40,7 @@
   const Game = {
     demo: false, bot: false, score: 0, hits: 0, stars: 0, retries: 3, shield: 100, over: false,
     stage: null, stageNo: 1, dist: 0, evIdx: 0, phase: 'intro', phaseT: 0, t: 0, scroll: 0, speed: 1,
-    ents: [], shots: [], eshots: [], run: null, diff: { shotDmg: 1, rate: 1, hp: 1 }, maxShield: 100, baseTier: 1, bombCap: 3, spawned: 0, mkills: 0, stageStartScore: 0, stageId: 's1', result: null, rollCd: 0.15, rollLen: 0.5, boostDrain: 34, boostRegen: 12, magnet: 0, boss: null, bossWarned: false, bossSpawned: false, cIdx: 0, missiles: [], refl: [], tier: 1, volleys: {}, volId: 0, bombFx: null, boost: 100, boostLock: false, bombs: 3, over2: 0, msg: null, hasBackdrop: true,
+    ents: [], shots: [], eshots: [], run: null, diff: { shotDmg: 1, rate: 1, hp: 1 }, maxShield: 100, baseTier: 1, bombCap: 3, spawned: 0, mkills: 0, stageStartScore: 0, stageId: 's1', result: null, rollCd: 0.9, rollLen: 0.75, boostDrain: 34, boostRegen: 12, magnet: 0, boss: null, bossWarned: false, bossSpawned: false, cIdx: 0, missiles: [], refl: [], tier: 1, volleys: {}, volId: 0, bombFx: null, boost: 100, boostLock: false, bombs: 3, over2: 0, msg: null, hasBackdrop: true,
     ship: null, cam: { x: 0, y: 0 }, flashT: 0, hurtT: 0, nextLife: 50000, onOver: null, onClear: null, stats: { kills: 0, shotsFired: 0, hitsTaken: 0, crashes: 0 },
   };
   G.game = Game;
@@ -81,7 +81,7 @@
     const up = Game.run.up;
     Game.maxShield = C.SHIELD + 25 * up.shield; Game.baseTier = 1 + up.laser; Game.tier = Game.baseTier;
     Game.bombCap = CP.bombCap(Game.run); Game.bombs = Math.min(Game.bombCap, Math.max(Game.run.bombs, 3));
-    Game.rollCd = [0.15, 0.08, 0.02][up.roll]; Game.rollLen = 0.5 + 0.07 * up.roll;
+    Game.rollCd = [0.9, 0.6, 0.35][up.roll]; Game.rollLen = 0.75 + 0.08 * up.roll;
     Game.boostDrain = 34 * (1 - 0.18 * up.boost); Game.boostRegen = 12 * (1 + 0.35 * up.boost); Game.magnet = up.magnet;
     Game.ringChain = 0; Game.rings = 0; Game.rescues = 0;
     Game.stageStartScore = Game.score; Game.spawned = 0; Game.mkills = 0; Game.stars = 0; Game.result = null;
@@ -341,7 +341,8 @@
     }
     const spd = 560;
     if (!Game.arena) {
-      s.vx += (ax * spd - s.vx) * Math.min(1, 9 * dt);
+      if (s.dashT > 0) { s.dashT -= dt; s.vx += (s.dashV * Math.max(0, s.dashT / 0.5) - s.vx) * Math.min(1, 16 * dt); }      /* the roll's sideways dash is not steerable */
+      else s.vx += (ax * spd - s.vx) * Math.min(1, 9 * dt);
       s.vy += (ay * spd * 0.8 - s.vy) * Math.min(1, 9 * dt);
       s.x = clamp(s.x + s.vx * dt, -C.BX, C.BX); s.y = clamp(s.y + s.vy * dt, C.BY0, C.BY1);
       s.bank += (clamp(s.vx / spd, -1, 1) - s.bank) * Math.min(1, 8 * dt);
@@ -349,7 +350,7 @@
     if (s.inv > 0) s.inv = Math.max(0, s.inv - dt);
     if (s.rollCd > 0) s.rollCd -= dt;
     const rr = I.takeRoll();
-    if (rr && s.rollT <= 0 && s.rollCd <= 0 && Game.phase !== 'intro') { s.rollT = Game.rollLen; s.rollDir = rr; s.rollCd = Game.rollCd; s.vx += rr * 620; snd('roll'); }
+    if (rr && s.rollT <= 0 && s.rollCd <= 0 && Game.phase !== 'intro') { s.rollT = Game.rollLen; s.rollDur = Game.rollLen; s.rollDir = rr; s.rollCd = Game.rollCd; s.dashT = Game.arena ? 0 : 0.5; s.dashV = rr * 1100; if (Game.arena) s.yr = (s.yr || 0) + rr * 1.2; snd('roll'); FX.glow(s.x, s.y, C.SHIP_Z, 120, 'rgba(120,220,255,1)', 0.3); }
     if (s.rollT > 0) s.rollT = Math.max(0, s.rollT - dt);
     /* boost / brake */
     const wantBoost = I.held.boost && !Game.boostLock && Game.boost > 0, wantBrake = I.held.brake && !wantBoost;

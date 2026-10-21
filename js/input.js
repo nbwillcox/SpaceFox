@@ -6,6 +6,7 @@
   /* always-on aliases (touch buttons send F13-F22; arrow keys steer) */
   const EXTRA = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', F13: 'left', F14: 'right', F15: 'up', F16: 'down', F17: 'fire', F18: 'rollL', F19: 'rollR', F20: 'bomb', F21: 'boost', F22: 'brake' };
   const last = { left: 0, right: 0 };
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
   function actionOf(code) {
     const K = G.settings.keys;
@@ -57,9 +58,23 @@
   window.addEventListener('keyup', (e) => { const a = actionOf(e.code); if (a) I.held[a] = false; });
   window.addEventListener('blur', () => I.clear());
   /* mouse: move to steer (until a steering key is touched), left button fires (hold = charge), right button rolls toward the pointer */
+  const cvEl = () => document.getElementById('game');
+  I.locked = () => document.pointerLockElement === cvEl();
+  /* pointer lock keeps the cursor inside the game while flying (Esc releases it and pauses) */
+  I.lock = function (on) {
+    try {
+      const cv = cvEl();
+      if (on) {
+        if (!G.settings.mouse || !window.matchMedia || !window.matchMedia('(pointer: fine)').matches || (G.debug && G.debug.bot)) return;
+        if (document.pointerLockElement !== cv && cv.requestPointerLock) { const p = cv.requestPointerLock(); if (p && p.catch) p.catch(() => {}); }
+      } else if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+    } catch (e) { /* ignore */ }
+  };
+  document.addEventListener('pointerlockchange', () => { if (!I.locked() && G.main && G.main.mode === 'play') G.main.pause(); });
   function toGame(e) {
     const v = G.view;
     if (!v) return;
+    if (I.locked()) { I.mx = clamp(I.mx + (e.movementX || 0) / v.s, 0, 960); I.my = clamp(I.my + (e.movementY || 0) / v.s, 0, 540); return; }
     I.mx = (e.clientX - v.ox) / v.s; I.my = (e.clientY - v.oy) / v.s;
   }
   I.bind = function (canvas) {
@@ -67,6 +82,7 @@
       I._any = true;
       if (e.pointerType !== 'mouse' || !G.settings.mouse) return;
       toGame(e); I.mouseActive = true;
+      if (G.main && G.main.mode === 'play' && !I.locked()) I.lock(true);
       if (e.button === 0) { I.held.fire = true; I._launch = true; }
       else if (e.button === 2) I._roll = I.mx < 480 ? -1 : 1;
       e.preventDefault();

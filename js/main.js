@@ -136,6 +136,8 @@
     if (G.debug.bot) Game.bot = true;
     M.mode = 'play';
     UI.hideAll();
+    I.mx = 480; I.my = 300;
+    I.lock(true);
     A.sfx.start();
   };
   M.restartStage = function () {
@@ -174,6 +176,7 @@
     M.mode = 'play';
     I.clear();
     UI.hideAll();
+    I.lock(true);
     if (A.ctx) A.ctx.resume();
   };
 

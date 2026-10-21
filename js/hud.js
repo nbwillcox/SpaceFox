@@ -124,6 +124,13 @@
       ctx.fillStyle = w.hp > 35 ? '#7dff9a' : '#ff6a5a'; ctx.fillRect(20, 98, 150 * U.clamp(w.hp / 100, 0, 1), 5);
       break;
     }
+    if (G.input.locked() && G.input.mouseActive) {
+      const mx = G.input.mx, my = G.input.my;
+      ctx.save(); ctx.strokeStyle = 'rgba(255,230,140,0.95)'; ctx.lineWidth = 2; ctx.shadowColor = 'rgba(255,210,80,0.9)'; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(mx, my, 9, 0, TAU);
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { ctx.moveTo(mx + dx * 13, my + dy * 13); ctx.lineTo(mx + dx * 21, my + dy * 21); }
+      ctx.stroke(); ctx.restore();
+    }
     if (g.arena) drawRadar(ctx, g);
     if (g.arena && G.arena.warn && g.phase === 'play') txt(ctx, 'RETURN TO THE ARENA', W / 2, 300, 24, '#ff8a6a', 'center', 900, 'rgba(255,100,60,0.9)');
     G.comms.draw(ctx, 20, 130);

@@ -7,6 +7,7 @@
   const NAMES = ['title', 'pause', 'settings', 'scores', 'gameover', 'diff', 'map', 'results', 'shop', 'cont', 'ending', 'howto'];
 
   UI.show = function (name) {
+    if (G.input && G.input.lock) G.input.lock(false);
     NAMES.forEach((n) => $(n).classList.toggle('hidden', n !== name));
     UI.cur = name;
     document.body.classList.toggle('menu-open', !!name);

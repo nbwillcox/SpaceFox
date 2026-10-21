@@ -247,7 +247,7 @@
   const ROLLSEQ = [1, 2, 3, 4, 0];
   function shipFrame(g) {
     const s = g.ship, F = SP.SHIP;
-    if (s.rollT > 0) { const k = 1 - s.rollT / 0.5; return { f: ROLLSEQ[Math.min(4, (k * 5) | 0)], flip: s.rollDir < 0 }; }
+    if (s.rollT > 0) return { f: F.LEVEL, flip: false };
     if (g.hurtT > 0 && ((g.t * 20) | 0) % 2) return { f: F.HURT, flip: false };
     const b = s.bank;
     if (b > 0.55) return { f: F.R2, flip: false };
@@ -271,11 +271,23 @@
     if (s.inv > 0 && s.rollT <= 0 && g.hurtT <= 0) alpha = ((g.t * 14) | 0) % 2 ? 0.4 : 1;
     if (g.phase === 'intro') alpha = Math.min(1, g.phaseT / 0.8);
     /* engine glow */
+    /* barrel roll: two full turns of the whole ship (eased), inside a spinning deflect bubble */
+    let ang = 0, rk = 0;
+    if (s.rollT > 0) { rk = clamp(1 - s.rollT / (s.rollDur || 0.75), 0, 1); const e = rk * rk * (3 - 2 * rk); ang = s.rollDir * e * Math.PI * 4; }
     ctx.globalCompositeOperation = 'lighter';
-    const eg = s.boosting ? 1 : 0.55;
-    for (const ex of [-0.19, 0.19]) { ctx.globalAlpha = 0.55 * eg * alpha; ctx.drawImage(G.gfx.glow('rgba(80,200,255,1)'), q.x + ex * 274 * k - 40 * k * 2.2, q.y + 8 * k - 40 * k * 2.2, 80 * k * 2.2, 80 * k * 2.2); }
+    const eg = s.boosting ? 1 : 0.55, ca = Math.cos(ang), sa = Math.sin(ang);
+    for (const ex of [-0.19, 0.19]) {
+      const ox = ex * 274 * k, oy = 8 * k, rx = ox * ca - oy * sa, ry = ox * sa + oy * ca;
+      ctx.globalAlpha = 0.55 * eg * alpha; ctx.drawImage(G.gfx.glow('rgba(80,200,255,1)'), q.x + rx - 40 * k * 2.2, q.y + ry - 40 * k * 2.2, 80 * k * 2.2, 80 * k * 2.2);
+    }
+    if (s.rollT > 0) {
+      const fade = Math.sin(Math.PI * rk), R0 = 150 * k * 1.35;
+      ctx.globalAlpha = 0.28 * fade; ctx.drawImage(G.gfx.glow('rgba(120,220,255,1)'), q.x - R0 * 1.5, q.y - R0 * 1.5, R0 * 3, R0 * 3);
+      ctx.globalAlpha = 0.85 * fade; ctx.strokeStyle = 'rgba(170,240,255,1)'; ctx.lineWidth = Math.max(2, 5 * k);
+      for (let i = 0; i < 3; i++) { const a0 = ang * 1.4 + i * 2.094; ctx.beginPath(); ctx.ellipse(q.x, q.y, R0, R0 * 0.82, 0, a0, a0 + 0.95); ctx.stroke(); }
+    }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-    SP.draw(ctx, 'ship', fr.f, q.x, q.y, k, fr.flip, alpha);
+    SP.draw(ctx, 'ship', fr.f, q.x, q.y, k, fr.flip, alpha, ang);
     if (s.over > 0) { ctx.globalCompositeOperation = 'lighter'; SP.draw(ctx, 'ship', SP.SHIP.SHIELD, q.x, q.y, k * 1.02, false, 0.55 + 0.25 * Math.sin(g.t * 8)); ctx.globalCompositeOperation = 'source-over'; }
   }
 
