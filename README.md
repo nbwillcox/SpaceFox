@@ -40,5 +40,9 @@ All of these can be changed in **Settings > Key bindings**.
 
 Play in landscape. A floating stick on the left steers the ship; on the right, **FIRE** (hold) shoots, the two **ROLL** buttons barrel-roll left or right to deflect shots, and **BOOST**, **BRAKE** and **BOMB** sit above them. The pause button opens the menu. The on-screen controls appear on touch devices automatically; Settings has size, opacity and a left-handed layout. Use your browser's *Add to Home Screen* to install it as a full-screen app.
 
+### Controller
+
+Plug in a gamepad and it just works: the stick or D-pad steers, **A** fires (hold to charge), **B** is the bomb, **X / LB** and **Y / RB** barrel-roll, **RT** boosts, **LT** brakes, **Start** pauses. In menus the D-pad / left stick moves the highlight, **A** selects, **B** goes back and **Start** plays or resumes. **Settings -> Controller** has a dead-zone slider and lets you remap every button.
+
 
 The mouse is locked to the game while you fly so a stray click cannot leave the window; press `Esc` to release it (the game pauses).

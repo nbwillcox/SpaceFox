@@ -106,7 +106,7 @@
     if (a === 'rollL') I._roll = -1; else if (a === 'rollR') I._roll = 1; else if (a === 'bomb') I._bomb = true; else if (a === 'pause') I._pause = true; else if (a === 'fire') I._launch = true;
   }
   I.pollPad = function () {
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const pads = window.PAD ? [] : (navigator.getGamepads ? navigator.getGamepads() : []);
     let gp = null;
     for (const p of pads) if (p && p.connected) { gp = p; break; }
     if (!gp) { if (pad.on) { pad.on = false; for (const a in pad.prev) if (pad.prev[a]) padSet(a, false); } return; }
