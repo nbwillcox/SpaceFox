@@ -10,7 +10,8 @@
   const CFG = window.PAD_CFG || {}, D = document, W = window;
   const PAD = (W.PAD = { cfg: CFG, connected: false, name: '', using: false, menu: false, rumbleOK: true });
   const SKEY = (CFG.id || 'game') + '.pad.v1';
-  const st = (PAD.st = { on: true, dead: 0.25, speed: 1, map: {} });
+  let realGet = navigator.getGamepads ? navigator.getGamepads.bind(navigator) : null;       /* native mode wraps navigator.getGamepads, so the kit always reads the real one */
+  const st = (PAD.st = { on: true, dead: CFG.deadDefault == null ? 0.25 : CFG.deadDefault, speed: 1, map: {} });
   try { Object.assign(st, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) { /* private mode */ }
   const save = () => { try { localStorage.setItem(SKEY, JSON.stringify(st)); } catch (e) { /* ignore */ } };
 
@@ -68,7 +69,7 @@
 
   /* ---- reading the pad -------------------------------------------------------------------------------------------------------------------------------------------------------- */
   function getPad() {
-    const ps = (navigator.getGamepads && navigator.getGamepads()) || [];
+    const ps = (realGet && realGet()) || [];
     let pad = null;
     for (const p of ps) if (p && p.connected) { if (!pad) pad = p; if (p.mapping === 'standard') { pad = p; break; } }
     return pad;
@@ -148,6 +149,12 @@
     if (focus) focus.classList.remove('pad-focus');
     focus = e;
     if (e) { e.classList.add('pad-focus'); try { e.focus({ preventScroll: true }); } catch (x) { /* ignore */ } e.scrollIntoView && e.scrollIntoView({ block: 'nearest' }); }
+  }
+  function nativeFocus() {
+    const a = D.activeElement;
+    if (a && a.tagName === 'BUTTON' && visible(a) && a.closest('#ui')) return;
+    const l = items(screenEl()).filter((e) => e.tagName === 'BUTTON'), pr = l.find((e) => e.classList.contains('primary')) || l[0];
+    if (pr) setFocus(pr);
   }
   function enterMenu() {
     PAD.menu = true; releaseAll();
@@ -240,6 +247,7 @@
     if (Math.abs(p.axes[0] || 0) + Math.abs(p.axes[1] || 0) + Math.abs(p.axes[2] || 0) + Math.abs(p.axes[3] || 0) > 0.6) any = true;
     if (any) PAD.using = true;
     if (listening) { listen(p); }
+    else if (CFG.native) { if (st.on && menuOpen()) nativeFocus(); }                              /* the game reads the pad itself (through the wrapper below); we only make sure a button is highlighted so A works at once */
     else if (st.on) {
       const m = menuOpen();
       if (m !== PAD.menu) { if (m) enterMenu(); else leaveMenu(); }
@@ -251,7 +259,7 @@
   /* ---- settings screen ------------------------------------------------------------------------------------------------------------------------------------------------------------ */
   let statEl = null, rows = {};
   function status() { if (statEl) statEl.textContent = PAD.connected ? 'Connected: ' + PAD.name.replace(/\s*\(.*$/, '').slice(0, 48) : 'No controller found - connect one and press any button'; }
-  function label(a) { const b = binds(a); return b.length ? b.map(pretty).join(' / ') : 'unbound'; }
+  function label(a) { const b = CFG.native ? binds(a).slice(0, 1) : binds(a); return b.length ? b.map(pretty).join(' / ') : 'unbound'; }
   function refreshRows() { for (const a of actions) if (rows[a.id]) rows[a.id].textContent = label(a); }
   function listen(p) {
     if (listenGrace > 0) { listenGrace--; return; }
@@ -259,7 +267,10 @@
       if (!bt(p, i) || prevBtn[i]) continue;
       const act = listening.act, name = NAMES[i];
       if (name === 'START') continue;                                                           /* Start is always pause / play */
-      for (const a of actions) if (a !== act) { const b = binds(a).filter((n) => n !== name); if (b.length !== binds(a).length) st.map[a.id] = b.length ? b : null; }
+      if (CFG.native) {                                                                         /* one button per action: swap with whoever had it */
+        const old = binds(act)[0];
+        for (const a of actions) if (a !== act && binds(a)[0] === name) st.map[a.id] = [old];
+      } else for (const a of actions) if (a !== act) { const b = binds(a).filter((n) => n !== name); if (b.length !== binds(a).length) st.map[a.id] = b.length ? b : null; }
       st.map[act.id] = [name];
       save(); listening.done(); listening = null; refreshRows(); return;
     }
@@ -271,7 +282,7 @@
     el('h3', '', g, 'CONTROLLER');
     statEl = el('p', 'pad-stat', g); status();
     const mk = (html) => { const l = el('label', '', g); l.innerHTML = html; return l; };
-    const on = mk('<input id="padOn" type="checkbox"> Use controller'); on.className = 'check';
+    const on = mk('<input id="padOn" type="checkbox"> Use controller'); on.className = 'check'; if (CFG.native) on.style.display = 'none';
     const dz = mk('Stick dead zone <input id="padDead" type="range" min="0.05" max="0.6" step="0.05">');
     on.querySelector('input').checked = st.on; dz.querySelector('input').value = st.dead;
     on.querySelector('input').addEventListener('change', (e) => { st.on = e.target.checked; save(); if (!st.on) releaseAll(); });
@@ -281,7 +292,7 @@
       cs.querySelector('input').value = st.speed; cs.querySelector('input').addEventListener('input', (e) => { st.speed = +e.target.value; save(); });
     }
     if (actions.length) {
-      el('div', 'pad-sub', g, 'Buttons - select one, then press the button you want');
+      el('div', 'pad-sub', g, CFG.native ? 'Main buttons - select one, then press the button you want (the other button swaps in)' : 'Buttons - select one, then press the button you want');
       const tbl = el('div', 'pad-map', g);
       for (const a of actions) {
         const r = el('div', 'pad-row', tbl); el('span', '', r, a.label || a.id);
@@ -315,6 +326,7 @@
   }
 
   /* ---- rumble (games may call PAD.rumble on hits) --------------------------------------------------------------------------------------------------------------------------------- */
+  PAD._setReal = (f) => { realGet = f; };                                                       /* tests feed a mock pad through this */
   PAD.step = step;                                                                              /* tests drive this by hand when the tab is hidden and rAF is paused */
   PAD.tap = function (code, ms) { fireKey('keydown', code); setTimeout(() => fireKey('keyup', code), ms || 60); };
   PAD.rumble = function (strong, weak, ms) {
@@ -324,6 +336,42 @@
     a.playEffect('dual-rumble', { duration: ms || 120, strongMagnitude: strong == null ? 0.5 : strong, weakMagnitude: weak == null ? 0.5 : weak }).catch(() => { PAD.rumbleOK = false; });
   };
 
-  function init() { css(); buildSettings(); requestAnimationFrame(loop); }
+
+  /* ---- native mode: a wrapper around navigator.getGamepads for games that read the pad themselves. It applies the dead zone, swaps the remapped buttons and goes quiet while a button is being picked.
+          Menus see the real pad, so A / B / D-pad always behave the same there. ---------------------------------------------------------------------------------------------------------------- */
+  function installWrapper() {
+    if (!CFG.native || !realGet) return;
+    navigator.getGamepads = function () {
+      const ps = realGet();
+      if (!st.on && !listening) return ps.map(() => null);
+      const out = [];
+      for (const p of ps) {
+        if (!p) { out.push(p); continue; }
+        const quiet = !!listening, menu = !quiet && menuOpen();
+        const ax = Array.from(p.axes), bs = [];
+        for (let i = 0; i < p.buttons.length; i++) { const b = p.buttons[i]; bs.push({ pressed: quiet ? false : b.pressed, touched: b.touched, value: quiet ? 0 : b.value }); }
+        if (quiet) ax.fill(0);
+        else {
+          for (let o = 0; o + 1 < ax.length && o < 4; o += 2) {
+            const x = ax[o], y = ax[o + 1], m = Math.hypot(x, y);
+            if (m < st.dead) { ax[o] = 0; ax[o + 1] = 0; } else { const k = Math.min(1, (m - st.dead) / (1 - st.dead)) / m; ax[o] = x * k; ax[o + 1] = y * k; }
+          }
+          if (!menu) {
+            const src = bs.map((b) => ({ pressed: b.pressed, touched: b.touched, value: b.value }));
+            for (const a of actions) { const d = IDX[(a.btn || [])[0]], q = IDX[binds(a)[0]]; if (d !== undefined && q !== undefined && d !== q && src[q]) bs[d] = src[q]; }
+          }
+        }
+        out.push({ id: p.id, index: p.index, connected: p.connected, mapping: p.mapping, timestamp: p.timestamp, axes: ax, buttons: bs, vibrationActuator: p.vibrationActuator, hapticActuators: p.hapticActuators });
+      }
+      return out;
+    };
+  }
+
+  function init() {
+    css(); installWrapper(); buildSettings(); requestAnimationFrame(loop);
+    if (!D.querySelector('#settings .pad-set')) {                                                /* games that build their menus from script: retry until the settings panel exists */
+      let n = 0, t = setInterval(() => { buildSettings(); if (D.querySelector('#settings .pad-set') || ++n > 40) clearInterval(t); }, 250);
+    }
+  }
   if (D.body) init(); else D.addEventListener('DOMContentLoaded', init);
 })();
